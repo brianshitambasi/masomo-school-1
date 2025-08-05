@@ -21,6 +21,7 @@ import ClassAdd from './components/admin/forms/ClassAdd';
 import ClassEdit from './components/admin/forms/ClassEdit';
 
 
+
 function App() {
   return (
    <Router>
@@ -49,6 +50,13 @@ function App() {
           <Route  path='students' element={<Student/>}/>
           <Route  path='parents' element={<Parents/>}/>
 
+          {/* teacher routes */}
+          <Route  path='teachers/add' element={<ClassAdd/>}/>
+          <Route  path='teachers/edit' element={<ClassEdit/>}/>
+          
+
+
+         
         </Route>
 
         <Route path='/login' element={<LoginComponent/>}/>
