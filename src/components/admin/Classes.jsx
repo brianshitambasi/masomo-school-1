@@ -49,6 +49,11 @@ const Classes = () => {
             }            
         }        
     }
+
+    // handle edit function
+    const handleEdit=(classData)=> {
+        navigate("/admin-dashboard/classes/edit",{state: {classData}})
+    }
   return (
     <div className=' container mt-2'>
         <ToastContainer position='top-right' autoClose={3000}/>
@@ -68,7 +73,8 @@ const Classes = () => {
                     <i className='bi bi-building me-2'></i>Classes list
                 </h5>
 
-                <button className='btn btn-success'>
+                <button className='btn btn-success'  
+                    onClick={()=>navigate('/admin-dashboard/classes/add')}>
                     <i className='bi bi-plus-circle'></i>Add Class
                 </button>
             </div>
@@ -101,7 +107,9 @@ const Classes = () => {
                                     <td>{cls.teacher?.name || 'N/A'}</td>
                                     <td>{cls.teacher?.phone ||  'N/A'}</td>
                                     <td>
-                                        <button className='btn btn-sm btn-warning me-2'>
+                                        <button className='btn btn-sm btn-warning me-2' 
+                                        onClick={()=>handleEdit(cls)}>
+                                            
                                             <i className='bi bi-pencil-square'></i>
                                         </button>
 
