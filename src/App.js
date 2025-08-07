@@ -19,6 +19,13 @@ import Student from './components/admin/Student';
 import Parents from './components/admin/Parents';
 import ClassAdd from './components/admin/forms/ClassAdd';
 import ClassEdit from './components/admin/forms/ClassEdit';
+import TeachersAdd from './components/admin/forms/TeachersAdd';
+import TeachersEdit from './components/admin/forms/TeachersEdit';
+import ParentAdd from './components/admin/forms/ParentAdd';
+import ParentEdit from './components/admin/forms/ParentEdit';
+import StudentsAdd from './components/admin/forms/StudentsAdd';
+import StudentEdit from './components/admin/forms/StudentEdit';
+
 
 
 
@@ -39,23 +46,25 @@ function App() {
           </ProtectedRoute>
         }>
           <Route  path='' element={<AdminDashboard/>}/>
+          
           <Route  path='classes' element={<Classes/>}/>
-      
           <Route  path='classes/add' element={<ClassAdd/>}/>
           <Route  path='classes/edit' element={<ClassEdit/>}/>
           
           {/* other admin routes */}
 
           <Route  path='teachers' element={<Teachers/>}/>
+          <Route  path='teachers/add' element={<TeachersAdd/>}/>
+          <Route  path='teachers/edit' element={<TeachersEdit/>}/>
+
           <Route  path='students' element={<Student/>}/>
+          <Route  path='students/add' element={<StudentsAdd/>}/>
+          <Route  path='students/edit' element={<StudentEdit/>}/>
+
+
           <Route  path='parents' element={<Parents/>}/>
-
-          {/* teacher routes */}
-          <Route  path='teachers/add' element={<ClassAdd/>}/>
-          <Route  path='teachers/edit' element={<ClassEdit/>}/>
-          
-
-
+          <Route  path='parents/add' element={<ParentAdd/>}/>
+          <Route  path='parents/edit' element={<ParentEdit/>}/>
          
         </Route>
 
