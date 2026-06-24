@@ -1,107 +1,238 @@
+/* home.css */
 .homepage {
   color: #333;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
- 
+
+/* Navbar - Override Bootstrap */
 .navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #004d99;
-  padding: 1rem 5%;
-  color: white;
+  background-color: #004d99 !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
- 
+
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
 .nav-links a {
   color: white;
   text-decoration: none;
 }
- 
+
+/* Hero Section */
 .hero {
   position: relative;
   height: 400px;
   overflow: hidden;
 }
- 
+
 .hero-image-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
 }
- 
+
 .hero-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
- 
+
 .hero-text {
   position: absolute;
-  top: 20%;
-  left: 10%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: white;
-  max-width: 600px;
+  max-width: 700px;
+  width: 90%;
   z-index: 2;
-  background: rgba(0, 0, 0, 0.4); /* Optional: adds readability */
-  padding: 1rem;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  backdrop-filter: blur(5px);
 }
- 
+
+.hero-text h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.hero-text p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Buttons */
 .btn-primary {
   display: inline-block;
-
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 2rem;
   background-color: #2e7d32;
   color: white;
   text-decoration: none;
-  border-radius: 4px;
-}
- 
-.btn-primary:hover {
-  background-color: #256029;
-}
- 
- 
-.hero h1 {
-  font-size: 2.5rem;
-
-}
- 
-.btn-primary {
-  background: #0077cc; 
-  color: white;
-  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   border: none;
-  text-decoration: none;
-  border-radius: 5px;
+  font-size: 1rem;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
- 
+
+.btn-primary:hover {
+  background-color: #1b5e20;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}
+
+/* Sections */
 .section {
-  padding: 3rem 5%;
+  padding: 4rem 5%;
 }
- 
+
+.section h2 {
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  color: #004d99;
+}
+
+.section.bg-light {
+  background-color: #f8f9fa;
+}
+
+/* CBC Benefits */
 .cbc-benefits {
-  list-style: disc inside;
+  list-style: none;
   columns: 2;
+  padding: 0;
+  margin-top: 1.5rem;
 }
- 
+
+.cbc-benefits li {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #f0f8ff;
+  border-radius: 8px;
+  border-left: 4px solid #2e7d32;
+  font-weight: 500;
+}
+
+.cbc-benefits li::before {
+  content: "✓ ";
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+/* Features */
 .features {
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
-  justify-content: space-around;
+  justify-content: center;
 }
- 
+
 .feature-card {
-  flex: 1 1 250px;
-  background: #f0f8ff;
-  padding: 1.5rem;
-  border-radius: 8px;
+  flex: 1 1 280px;
+  max-width: 350px;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  text-align: center;
 }
- 
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.feature-card h3 {
+  color: #004d99;
+  margin-bottom: 0.75rem;
+  font-size: 1.3rem;
+}
+
+.feature-card p {
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Footer */
 .footer {
   background: #004d99;
   color: white;
   text-align: center;
-  padding: 1rem;
+  padding: 2rem;
+}
+
+.footer p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero {
+    height: 300px;
+  }
+  
+  .hero-text {
+    padding: 1.5rem;
+    width: 95%;
+  }
+  
+  .hero-text h1 {
+    font-size: 1.8rem;
+  }
+  
+  .hero-text p {
+    font-size: 1rem;
+  }
+  
+  .section {
+    padding: 2rem 1.5rem;
+  }
+  
+  .section h2 {
+    font-size: 1.8rem;
+  }
+  
+  .cbc-benefits {
+    columns: 1;
+  }
+  
+  .feature-card {
+    flex: 1 1 100%;
+  }
+  
+  .btn-primary {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    height: 250px;
+  }
+  
+  .hero-text h1 {
+    font-size: 1.3rem;
+  }
+  
+  .hero-text p {
+    font-size: 0.8rem;
+  }
+  
+  .hero-text {
+    padding: 1rem;
+  }
+  
+  .section h2 {
+    font-size: 1.5rem;
+  }
 }

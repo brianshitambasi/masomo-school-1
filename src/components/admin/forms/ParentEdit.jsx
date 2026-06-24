@@ -10,34 +10,69 @@ const ParentEdit = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const selectedParent = state?.parentData;
+  
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [loading, setLoading] = useState(false);
 
+  const API_URL = 'https://schools-gngz.onrender.com'; // or use config
 
   // Prepare auth header
   const authHeader = {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    
     try {
       toast.info('Updating Parent...');
       const data = { name, email, phone, address };
+      
+      console.log('Updating parent with data:', data);
+      console.log('Parent ID:', selectedParent._id);
+      
       const res = await axios.put(
-        `https://schoolapi-d7yp.onrender.com/api/parent/${selectedParent._id}`,
+        `${API_URL}/parent/${selectedParent._id}`,
         data,
         authHeader
       );
+      
+      console.log('Update response:', res.data);
+      
       toast.dismiss();
       toast.success(res.data?.message || 'Parent updated successfully');
+      setLoading(false);
       navigate('/admin-dashboard/parents');
+      
     } catch (error) {
+      setLoading(false);
       toast.dismiss();
-      toast.error(error.response?.data?.message || 'Error updating parent');
+      
+      console.error('Update error:', error);
+      
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        
+        const errorMessage = error.response.data?.message || 
+                           error.response.data?.msg || 
+                           'Error updating parent';
+        toast.error(`Error ${error.response.status}: ${errorMessage}`);
+        
+      } else if (error.request) {
+        toast.error('Cannot connect to server. Please check if backend is running on port 3004');
+        
+      } else {
+        toast.error(error.message || 'Error updating parent');
+      }
     }
   };
 
@@ -50,10 +85,13 @@ const ParentEdit = () => {
       }, 2000);
       return;
     }
+    
+    console.log('Editing parent:', selectedParent);
+    
     setName(selectedParent?.name || '');
     setEmail(selectedParent?.email || '');
     setPhone(selectedParent?.phone || '');
-    setAddress(selectedParent?.address || '')
+    setAddress(selectedParent?.address || '');
   }, [selectedParent, navigate]);
 
   return (
@@ -89,6 +127,7 @@ const ParentEdit = () => {
         <form onSubmit={handleSubmit}>
           <div className="row">
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Parent Name</label>
               <input
                 type="text"
                 className="form-control"
@@ -96,9 +135,11 @@ const ParentEdit = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Email</label>
               <input
                 type="email"
                 className="form-control"
@@ -106,30 +147,61 @@ const ParentEdit = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Phone</label>
               <input
                 type="tel"
                 className="form-control"
                 placeholder="Phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Address</label>
               <input
                 type="text"
                 className="form-control"
                 placeholder="Address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                disabled={loading}
               />
             </div>
           </div>
-          <button type="submit" className="btn btn-success">
-            <i className="bi bi-save"></i> Save Parent
-          </button>
+          
+          <div className="mt-3 d-flex gap-2">
+            <button 
+              type="submit" 
+              className="btn btn-success"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </span>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-save me-2"></i>
+                  Update Parent
+                </>
+              )}
+            </button>
+            <Link 
+              to="/admin-dashboard/parents" 
+              className="btn btn-secondary"
+            >
+              <i className="bi bi-x-circle me-2"></i>
+              Cancel
+            </Link>
+          </div>
         </form>
       </div>
     </div>

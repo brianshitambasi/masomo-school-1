@@ -12,26 +12,53 @@ const ParentAdd = () => {
   const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [address, setAddress] = React.useState('');
-    const [nationalId, setNationalId] = React.useState('');
+  const [nationalId, setNationalId] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
-  // Prepare auth header
+  const API_URL = 'https://schools-gngz.onrender.com';
+
   const authHeader = {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    
     try {
       toast.info('Adding Parent...');
       const data = { name, email, phone, address, nationalId };
-      const res = await axios.post('https://schoolapi-d7yp.onrender.com/api/parent', data, authHeader);
+      
+      console.log('Adding parent:', data);
+      
+      const res = await axios.post(`${API_URL}/parent`, data, authHeader);
+      
+      console.log('Response:', res.data);
+      
       toast.dismiss();
       toast.success(res.data?.message || 'Parent added successfully');
-      navigate('/admin-dashboard/students/add');
+      setLoading(false);
+      navigate('/admin-dashboard/parents');
+      
     } catch (error) {
+      setLoading(false);
       toast.dismiss();
-      toast.error(error.response?.data?.message || 'Error adding parent');
+      
+      console.error('Error:', error);
+      
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 
+                           error.response.data?.msg || 
+                           'Error adding parent';
+        toast.error(`Error ${error.response.status}: ${errorMessage}`);
+      } else if (error.request) {
+        toast.error('Cannot connect to server. Please check if backend is running.');
+      } else {
+        toast.error(error.message || 'Error adding parent');
+      }
     }
   };
 
@@ -39,7 +66,6 @@ const ParentAdd = () => {
     <div className="container mt-2">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* Breadcrumbs */}
       <nav aria-label="breadcrumb" className="mb-3">
         <ol className="breadcrumb">
           <li className="breadcrumb-item fw-bold">
@@ -64,10 +90,10 @@ const ParentAdd = () => {
           </Link>
         </div>
 
-        {/* Form to add a parent */}
         <form onSubmit={handleSubmit}>
           <div className="row">
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Parent Name</label>
               <input
                 type="text"
                 className="form-control"
@@ -75,9 +101,11 @@ const ParentAdd = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Email</label>
               <input
                 type="email"
                 className="form-control"
@@ -85,39 +113,73 @@ const ParentAdd = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Phone</label>
               <input
                 type="tel"
                 className="form-control"
                 placeholder="Phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Address</label>
               <input
                 type="text"
                 className="form-control"
                 placeholder="Address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">National ID</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="National Id"
+                placeholder="National ID"
                 value={nationalId}
                 onChange={(e) => setNationalId(e.target.value)}
+                required
+                disabled={loading}
               />
             </div>
           </div>
-          <button type="submit" className="btn btn-success">
-            <i className="bi bi-save"></i> Save Parent
-          </button>
+          
+          <div className="mt-3 d-flex gap-2">
+            <button 
+              type="submit" 
+              className="btn btn-success"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </span>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-save me-2"></i>
+                  Save Parent
+                </>
+              )}
+            </button>
+            <Link 
+              to="/admin-dashboard/parents" 
+              className="btn btn-secondary"
+            >
+              <i className="bi bi-x-circle me-2"></i>
+              Cancel
+            </Link>
+          </div>
         </form>
       </div>
     </div>
