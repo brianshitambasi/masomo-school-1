@@ -4,14 +4,15 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import axios from 'axios'
+import { API_URL } from '../../config'
 
 const Student = () => {
     const [students, setStudents] = useState([])
     const [loading, setLoading] = useState(true)
     const { token } = useContext(AuthContext)
     const navigate = useNavigate()
-    const API_URL = 'https://schools-gngz.onrender.com'
     
+    // ✅ FIXED: authHeader is now INSIDE useEffect
     useEffect(() => {
         const authHeader = {
             headers: { Authorization: `Bearer ${token}` }
@@ -34,7 +35,7 @@ const Student = () => {
             }
         }
         FetchStudents()
-    }, [token])
+    }, [token]) // ✅ Added token as dependency
 
     const handleDelete = async (id) => {
         const authHeader = {
@@ -59,14 +60,9 @@ const Student = () => {
         navigate("/admin-dashboard/students/edit", { state: { studentData } })
     }
 
-    // Helper function to get image URL
     const getImageUrl = (photoPath) => {
         if (!photoPath) return null
-        // If photoPath already starts with http, use it as is
-        if (photoPath.startsWith('http')) {
-            return photoPath
-        }
-        // Otherwise, prepend the API URL
+        if (photoPath.startsWith('http')) return photoPath
         return `${API_URL}/${photoPath}`
     }
 
@@ -144,17 +140,15 @@ const Student = () => {
                                                 <img 
                                                     src={getImageUrl(student.photo)} 
                                                     alt={student.name}
-                                                    className="rounded-circle"
+                                                    className="rounded-circle border border-success"
                                                     style={{ 
                                                         width: '50px', 
                                                         height: '50px', 
                                                         objectFit: 'cover',
-                                                        border: '2px solid #28a745'
+                                                        borderWidth: '2px'
                                                     }}
                                                     onError={(e) => {
-                                                        e.target.onerror = null
                                                         e.target.style.display = 'none'
-                                                        // Show fallback
                                                         const parent = e.target.parentElement
                                                         const fallback = document.createElement('div')
                                                         fallback.className = 'rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center'
@@ -173,7 +167,7 @@ const Student = () => {
                                         <td>
                                             <strong>{student.name}</strong>
                                         </td>
-                                        <td>{student.admissionNumber}</td>
+                                        <td>{student.admissionNumber || 'N/A'}</td>
                                         <td>
                                             <span className={`badge ${student.gender === 'Male' ? 'bg-primary' : 'bg-pink'}`}>
                                                 {student.gender || 'N/A'}

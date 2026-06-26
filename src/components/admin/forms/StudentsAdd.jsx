@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
+import { API_URL } from '../../../config';
 
 const StudentsAdd = () => {
   const { token } = useContext(AuthContext);
@@ -21,9 +22,7 @@ const StudentsAdd = () => {
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_URL = 'https://schools-gngz.onrender.com';
-
-  // FIXED: Added token to dependency array
+  // ✅ FIXED: Added token to dependency array
   useEffect(() => {
     const fetchClasses = async () => {
       try {
@@ -201,6 +200,11 @@ const StudentsAdd = () => {
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold">Photo</label>
               <input type="file" className="form-control" accept="image/*" onChange={(e) => setPhoto(e.target.files[0])} disabled={loading} />
+              {photo && (
+                <small className="text-success d-block mt-1">
+                  <i className="bi bi-image me-1"></i>Selected: {photo.name}
+                </small>
+              )}
             </div>
           </div>
           <button type="submit" className="btn btn-success" disabled={loading || !selectedParent}>
