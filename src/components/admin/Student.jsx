@@ -9,36 +9,40 @@ const Student = () => {
     const [students, setStudents] = useState([])
     const { token } = useContext(AuthContext)
     const navigate = useNavigate()
-    const API_URL = 'https://schools-gngz.onrender.com' // or 'https://schoolapi-92n6.onrender.com'
+    const API_URL = 'https://schools-gngz.onrender.com'
     
-    const authHeader = {
-        headers: { Authorization: `Bearer ${token}` }
-    }
-
-    const FetchStudents = async () => {
-        try {
-            toast.info("Loading Students...")
-            const res = await axios.get(`${API_URL}/student`, authHeader)
-            console.log(res.data)
-            setStudents(res.data)
-            toast.dismiss()
-        } catch (error) {
-            toast.dismiss()
-            toast.error(error.response?.data?.message || 'Failed to load Students')
-        }
-    }
-
+    // FIXED: authHeader is now inside useEffect
     useEffect(() => {
+        const authHeader = {
+            headers: { Authorization: `Bearer ${token}` }
+        }
+
+        const FetchStudents = async () => {
+            try {
+                toast.info("Loading Students...")
+                const res = await axios.get(`${API_URL}/student`, authHeader)
+                console.log(res.data)
+                setStudents(res.data)
+                toast.dismiss()
+            } catch (error) {
+                toast.dismiss()
+                toast.error(error.response?.data?.message || 'Failed to load Students')
+            }
+        }
         FetchStudents()
-    }, [])
+    }, [token]) // ✅ Added token as dependency
 
     const handleDelete = async (id) => {
+        const authHeader = {
+            headers: { Authorization: `Bearer ${token}` }
+        }
         if (window.confirm('Delete this student?')) {
             try {
                 toast.warning('Deleting student...')
                 const res = await axios.delete(`${API_URL}/student/${id}`, authHeader)
                 toast.info(res.data.message)
-                FetchStudents()
+                const fetchRes = await axios.get(`${API_URL}/student`, authHeader)
+                setStudents(fetchRes.data)
             } catch (error) {
                 toast.dismiss()
                 toast.error(error.response?.data?.message)

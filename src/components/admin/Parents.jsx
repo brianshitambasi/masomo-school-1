@@ -9,28 +9,28 @@ const Parents = () => {
     const [parents, setParents] = useState([])
     const { token } = useContext(AuthContext)
     const navigate = useNavigate()
-    const API_URL = 'https://schools-gngz.onrender.com' // or 'https://schoolapi-92n6.onrender.com'
+    const API_URL = 'https://schools-gngz.onrender.com'
     
     const authHeader = {
         headers: { Authorization: `Bearer ${token}` }
     }
 
-    const FetchParents = async () => {
-        try {
-            toast.info("Loading Parents...")
-            const res = await axios.get(`${API_URL}/parent`, authHeader)
-            console.log(res.data)
-            setParents(res.data)
-            toast.dismiss()
-        } catch (error) {
-            toast.dismiss()
-            toast.error(error.response?.data?.message || 'Failed to load Parents')
-        }
-    }
-
+    // FIXED: FetchParents inside useEffect
     useEffect(() => {
+        const FetchParents = async () => {
+            try {
+                toast.info("Loading Parents...")
+                const res = await axios.get(`${API_URL}/parent`, authHeader)
+                console.log(res.data)
+                setParents(res.data)
+                toast.dismiss()
+            } catch (error) {
+                toast.dismiss()
+                toast.error(error.response?.data?.message || 'Failed to load Parents')
+            }
+        }
         FetchParents()
-    }, [])
+    }, []) // Empty array - OK because function is inside
 
     const handleDelete = async (id) => {
         if (window.confirm('Delete this parent?')) {
@@ -38,7 +38,8 @@ const Parents = () => {
                 toast.warning('Deleting parent...')
                 const res = await axios.delete(`${API_URL}/parent/${id}`, authHeader)
                 toast.info(res.data.message)
-                FetchParents()
+                const fetchRes = await axios.get(`${API_URL}/parent`, authHeader)
+                setParents(fetchRes.data)
             } catch (error) {
                 toast.dismiss()
                 toast.error(error.response?.data?.message)

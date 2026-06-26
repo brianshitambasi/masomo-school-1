@@ -14,31 +14,34 @@ const ClassAdd = () => {
     const [teachers, setTeachers] = useState([])
     const [selectedTeacherId, setSelectedTeacherId] = useState("")
     
-    const API_URL = 'https://schools-gngz.onrender.com' // or 'https://schoolapi-92n6.onrender.com'
+    const API_URL = 'https://schools-gngz.onrender.com'
     
-    const authHeader = {
-        headers: { Authorization: `Bearer ${token}` }
-    }
-
-    const FetchTeachers = async () => {
-        try {
-            toast.info('Loading teachers...')
-            const res = await axios.get(`${API_URL}/teacher`, authHeader)
-            console.log("Teachers:", res.data)
-            setTeachers(res.data)
-            toast.dismiss()
-        } catch (error) {
-            toast.dismiss()
-            toast.error(error.response?.data?.message || "Failed to load teachers")
-        }
-    }
-
+    // FIXED: authHeader is now inside useEffect
     useEffect(() => {
+        const authHeader = {
+            headers: { Authorization: `Bearer ${token}` }
+        }
+
+        const FetchTeachers = async () => {
+            try {
+                toast.info('Loading teachers...')
+                const res = await axios.get(`${API_URL}/teacher`, authHeader)
+                console.log("Teachers:", res.data)
+                setTeachers(res.data)
+                toast.dismiss()
+            } catch (error) {
+                toast.dismiss()
+                toast.error(error.response?.data?.message || "Failed to load teachers")
+            }
+        }
         FetchTeachers()
-    }, [])
+    }, [token]) // ✅ Added token as dependency
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        const authHeader = {
+            headers: { Authorization: `Bearer ${token}` }
+        }
         try {
             toast.info("Submitting...")
             const data = { name, gradeLevel, classYear, teacher: selectedTeacherId }
