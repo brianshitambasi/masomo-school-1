@@ -149,7 +149,7 @@ const AdminDashboard = () => {
                                 <div className="col-md-8">
                                     <h2 className="text-white fw-bold mb-2">
                                         <i className="bi bi-house-door-fill me-2"></i>
-                                        Welcome back, {user?.name || 'Admin'}! í±‹
+                                        Welcome back, {user?.name || 'Admin'}! 
                                     </h2>
                                     <p className="text-white-50 mb-0">
                                         <i className="bi bi-calendar3 me-2"></i>

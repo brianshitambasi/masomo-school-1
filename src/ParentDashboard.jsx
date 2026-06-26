@@ -54,7 +54,7 @@ const ParentDashboard = () => {
             <div className="card-body p-4">
               <h2 className="text-white fw-bold mb-2">
                 <i className="bi bi-house-door-fill me-2"></i>
-                Welcome, {user?.name || 'Parent'}! í±‹
+                Welcome, {user?.name || 'Parent'}! .
               </h2>
               <p className="text-white-50 mb-0">
                 <i className="bi bi-calendar3 me-2"></i>

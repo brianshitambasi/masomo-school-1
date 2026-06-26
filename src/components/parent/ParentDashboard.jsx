@@ -49,7 +49,7 @@ const ParentDashboard = () => {
         <div className="col-12">
           <div className="card border-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', borderRadius: '15px' }}>
             <div className="card-body p-4">
-              <h2 className="text-white fw-bold mb-2"><i className="bi bi-house-door-fill me-2"></i>Welcome, {user?.name || 'Parent'}! í±‹</h2>
+              <h2 className="text-white fw-bold mb-2"><i className="bi bi-house-door-fill me-2"></i>Welcome, {user?.name || 'Parent'}! .</h2>
               <p className="text-white-50 mb-0"><i className="bi bi-calendar3 me-2"></i>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           </div>
