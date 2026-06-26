@@ -41,7 +41,6 @@ const DashboardNavbar = ({ toggleSidebar, isMobile }) => {
       }}
     >
       <div className="container-fluid px-0">
-        {/* Left Section - Toggle & Brand */}
         <div className="d-flex align-items-center">
           <button 
             className="btn btn-outline-secondary me-3" 
@@ -64,10 +63,7 @@ const DashboardNavbar = ({ toggleSidebar, isMobile }) => {
           <Link 
             to="/admin-dashboard" 
             className="navbar-brand fw-bold d-flex align-items-center"
-            style={{ 
-              color: '#2c3e50',
-              fontSize: '1.1rem'
-            }}
+            style={{ color: '#2c3e50', fontSize: '1.1rem' }}
           >
             <div className="bg-success rounded-circle d-flex align-items-center justify-content-center me-2" 
                  style={{ width: '34px', height: '34px' }}>
@@ -80,9 +76,7 @@ const DashboardNavbar = ({ toggleSidebar, isMobile }) => {
           </Link>
         </div>
 
-        {/* Right Section - Search, Notifications, User */}
         <div className="d-flex align-items-center">
-          {/* Search - Desktop only */}
           <div className="d-none d-lg-block me-3">
             <div className="position-relative">
               <input 
@@ -111,7 +105,6 @@ const DashboardNavbar = ({ toggleSidebar, isMobile }) => {
             </div>
           </div>
 
-          {/* Notifications */}
           <div className="position-relative me-2">
             <button 
               className="btn btn-light btn-sm position-relative"
@@ -175,14 +168,21 @@ const DashboardNavbar = ({ toggleSidebar, isMobile }) => {
             )}
           </div>
 
-          {/* User Dropdown */}
+          {/* ✅ FIXED: Replaced <a> with <button> */}
           <div className="dropdown">
-            <a 
+            <button 
               className="dropdown-toggle d-flex align-items-center text-decoration-none" 
-              href="#" 
-              role="button" 
+              type="button"
               data-bs-toggle="dropdown"
-              style={{ padding: '4px 8px', borderRadius: '8px' }}
+              aria-expanded="false"
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: 'inherit', 
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '8px'
+              }}
             >
               <div 
                 className="rounded-circle bg-gradient d-flex align-items-center justify-content-center me-2"
@@ -206,7 +206,7 @@ const DashboardNavbar = ({ toggleSidebar, isMobile }) => {
                   {user?.role || 'Admin'}
                 </small>
               </div>
-            </a>
+            </button>
             <ul className="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2" 
                 style={{ borderRadius: '10px', minWidth: '200px' }}>
               <li>
@@ -217,27 +217,23 @@ const DashboardNavbar = ({ toggleSidebar, isMobile }) => {
               </li>
               <li>
                 <Link to="/admin-dashboard/profile" className="dropdown-item py-2" style={{ fontSize: '13px' }}>
-                  <i className="bi bi-person me-2 text-primary"></i>
-                  My Profile
+                  <i className="bi bi-person me-2 text-primary"></i>My Profile
                 </Link>
               </li>
               <li>
                 <Link to="/admin-dashboard/settings" className="dropdown-item py-2" style={{ fontSize: '13px' }}>
-                  <i className="bi bi-gear me-2 text-secondary"></i>
-                  Settings
+                  <i className="bi bi-gear me-2 text-secondary"></i>Settings
                 </Link>
               </li>
               <li><hr className="dropdown-divider my-1" /></li>
               <li>
                 <button className="dropdown-item py-2 text-danger" onClick={handleLogout} style={{ fontSize: '13px' }}>
-                  <i className="bi bi-box-arrow-right me-2"></i>
-                  <span className="fw-semibold">Logout</span>
+                  <i className="bi bi-box-arrow-right me-2"></i>Logout
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Mobile Toggler */}
           <button 
             className="navbar-toggler border-0 ms-2 d-lg-none" 
             type="button" 
