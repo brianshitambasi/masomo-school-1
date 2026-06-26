@@ -25,6 +25,9 @@ import Classes from './components/admin/Classes';
 import Teachers from './components/admin/Teachers';
 import Student from './components/admin/Student';
 import Parents from './components/admin/Parents';
+import AdminNotifications from './components/admin/AdminNotifications';
+import AdminProfile from './components/admin/AdminProfile'; // ✅ ADDED
+import AdminSettings from './components/admin/AdminSettings'; // ✅ ADDED
 
 // Admin Forms
 import ClassAdd from './components/admin/forms/ClassAdd';
@@ -99,6 +102,9 @@ function App() {
             <Route path='parents' element={<Parents />} />
             <Route path='parents/add' element={<ParentAdd />} />
             <Route path='parents/edit' element={<ParentEdit />} />
+            <Route path='notifications' element={<AdminNotifications />} />
+            <Route path='profile' element={<AdminProfile />} /> {/* ✅ ADDED */}
+            <Route path='settings' element={<AdminSettings />} /> {/* ✅ ADDED */}
           </Route>
 
           {/* TEACHER ROUTES */}
