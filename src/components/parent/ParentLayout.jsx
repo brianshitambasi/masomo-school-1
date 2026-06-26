@@ -54,9 +54,17 @@ const ParentLayout = () => {
   return (
     <div className="d-flex" style={{ minHeight: '100vh', background: '#f4f6f9' }}>
       <ToastContainer position="top-right" autoClose={3000} />
-      <div style={{ position: isMobile ? 'fixed' : 'fixed', top: 0, left: 0, height: '100vh', zIndex: 1000, width: sidebarOpen ? '250px' : '0px', overflow: 'hidden', transition: 'width 0.3s ease', boxShadow: '2px 0 10px rgba(0,0,0,0.1)', backgroundColor: '#1a1a2e', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ 
+        position: isMobile ? 'fixed' : 'fixed', 
+        top: 0, left: 0, height: '100vh', zIndex: 1000, 
+        width: sidebarOpen ? '250px' : '0px', overflow: 'hidden', 
+        transition: 'width 0.3s ease', boxShadow: '2px 0 10px rgba(0,0,0,0.1)', 
+        backgroundColor: '#1a1a2e', display: 'flex', flexDirection: 'column' 
+      }}>
         <div className="p-3 text-center border-bottom border-secondary">
-          <div className="bg-success rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style={{ width: '60px', height: '60px' }}><i className="bi bi-person-fill text-white" style={{ fontSize: '30px' }}></i></div>
+          <div className="bg-success rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style={{ width: '60px', height: '60px' }}>
+            <i className="bi bi-person-fill text-white" style={{ fontSize: '30px' }}></i>
+          </div>
           <h5 className="text-white mb-0">{user?.name || 'Parent'}</h5>
           <small className="text-white-50">Parent Portal</small>
         </div>
@@ -72,24 +80,41 @@ const ParentLayout = () => {
           </ul>
         </nav>
         <div className="p-3 border-top border-secondary">
-          <button className="btn btn-outline-danger w-100 text-start" onClick={handleLogout} style={{ borderRadius: '8px' }}><i className="bi bi-box-arrow-right me-2"></i>Logout</button>
+          <button className="btn btn-outline-danger w-100 text-start" onClick={handleLogout} style={{ borderRadius: '8px' }}>
+            <i className="bi bi-box-arrow-right me-2"></i>Logout
+          </button>
           <small className="text-white-50 d-block text-center mt-2">v1.0.0</small>
         </div>
       </div>
-      {isMobile && sidebarOpen && (<div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999, cursor: 'pointer' }} onClick={toggleSidebar} />)}
+      {isMobile && sidebarOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999, cursor: 'pointer' }} onClick={toggleSidebar} />
+      )}
       <div className="flex-grow-1" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '250px' : '0px'), transition: 'margin-left 0.3s ease', minHeight: '100vh', display: 'flex', flexDirection: 'column', width: '100%' }}>
         <nav className="navbar navbar-expand-lg bg-white shadow-sm" style={{ padding: '0 24px', borderBottom: '1px solid #e9ecef', height: '64px', width: '100%', position: 'sticky', top: 0, zIndex: 999, background: 'white' }}>
           <div className="container-fluid px-0">
             <div className="d-flex align-items-center">
-              <button className="btn btn-outline-secondary me-3" onClick={toggleSidebar} style={{ border: 'none', fontSize: '1.2rem', padding: '6px 10px', borderRadius: '8px', color: '#495057', background: '#f8f9fa' }}><i className={`bi ${isMobile ? 'bi-list' : 'bi-chevron-left'}`}></i></button>
+              <button className="btn btn-outline-secondary me-3" onClick={toggleSidebar} style={{ border: 'none', fontSize: '1.2rem', padding: '6px 10px', borderRadius: '8px', color: '#495057', background: '#f8f9fa' }}>
+                <i className={`bi ${isMobile ? 'bi-list' : 'bi-chevron-left'}`}></i>
+              </button>
               <Link to="/parent-dashboard" className="navbar-brand fw-bold"><span className="text-success">Masomo</span> <span className="text-secondary">Parent</span></Link>
             </div>
             <div className="d-flex align-items-center">
               <div className="dropdown">
-                <a className="dropdown-toggle d-flex align-items-center text-decoration-none" href="#" role="button" data-bs-toggle="dropdown">
-                  <div className="rounded-circle bg-success d-flex align-items-center justify-content-center me-2" style={{ width: '34px', height: '34px', fontSize: '13px', fontWeight: 'bold', color: 'white' }}>{user?.name?.charAt(0)?.toUpperCase() || 'P'}</div>
-                  <div className="d-none d-md-block"><div className="fw-bold small" style={{ fontSize: '13px' }}>{user?.name || 'Parent'}</div><small className="text-muted" style={{ fontSize: '10px' }}><i className="bi bi-shield-check me-1 text-success"></i>Parent</small></div>
-                </a>
+                <button 
+                  className="dropdown-toggle d-flex align-items-center text-decoration-none btn btn-link" 
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  style={{ textDecoration: 'none', color: 'inherit', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  <div className="rounded-circle bg-success d-flex align-items-center justify-content-center me-2" style={{ width: '34px', height: '34px', fontSize: '13px', fontWeight: 'bold', color: 'white' }}>
+                    {user?.name?.charAt(0)?.toUpperCase() || 'P'}
+                  </div>
+                  <div className="d-none d-md-block">
+                    <div className="fw-bold small" style={{ fontSize: '13px' }}>{user?.name || 'Parent'}</div>
+                    <small className="text-muted" style={{ fontSize: '10px' }}><i className="bi bi-shield-check me-1 text-success"></i>Parent</small>
+                  </div>
+                </button>
                 <ul className="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2" style={{ borderRadius: '10px', minWidth: '200px' }}>
                   <li><Link to="/parent-dashboard/profile" className="dropdown-item py-2"><i className="bi bi-person me-2 text-primary"></i>Profile</Link></li>
                   <li><hr className="dropdown-divider my-1" /></li>
@@ -107,4 +132,5 @@ const ParentLayout = () => {
     </div>
   )
 }
+
 export default ParentLayout

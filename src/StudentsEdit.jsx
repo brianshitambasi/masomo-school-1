@@ -25,39 +25,40 @@ const StudentsEdit = () => {
 
   const API_URL = 'https://schools-gngz.onrender.com';
 
-  // FIXED: Added token to dependency array
+  // REMOVED unused authHeader
+
+  const fetchClasses = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/classroom`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setClassrooms(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error('Error fetching classrooms:', error);
+      toast.error('Failed to load classrooms');
+    }
+  };
+
+  const fetchParents = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/parent`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setParents(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error('Error fetching parents:', error);
+      toast.error('Failed to load parents');
+    }
+  };
+
   useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/classroom`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setClassrooms(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
-        console.error('Error fetching classrooms:', error);
-        toast.error('Failed to load classrooms');
-      }
-    };
-
-    const fetchParents = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/parent`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setParents(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
-        console.error('Error fetching parents:', error);
-        toast.error('Failed to load parents');
-      }
-    };
-
     const loadData = async () => {
       setIsLoading(true);
       await Promise.all([fetchClasses(), fetchParents()]);
       setIsLoading(false);
     };
     loadData();
-  }, [token]); // ✅ Added token as dependency
+  }, []);
 
   useEffect(() => {
     if (!selectedStudent) {
