@@ -6,19 +6,18 @@ import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { API_URL } from '../../config';
 
-const ParentMessages = () => {
+const TeacherMessages = () => {
   const { token } = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
-  // ✅ REMOVED unused selectedMessage
+  const [selectedMessage, setSelectedMessage] = useState(null);
   const [filter, setFilter] = useState('inbox');
 
-  // ✅ FIXED: authHeader is now inside useCallback
-  const fetchMessages = useCallback(async () => {
-    const authHeader = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
+  const authHeader = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
 
+  const fetchMessages = useCallback(async () => {
     setLoading(true);
     try {
       const endpoint = filter === 'sent' ? 'sent' : 'inbox';
@@ -30,17 +29,13 @@ const ParentMessages = () => {
     } finally {
       setLoading(false);
     }
-  }, [filter, token]);
+  }, [filter]);
 
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
 
   const markAsRead = async (messageId) => {
-    const authHeader = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
-
     try {
       await axios.put(`${API_URL}/message/${messageId}/read`, {}, authHeader);
       setMessages(messages.map(msg => 
@@ -53,11 +48,6 @@ const ParentMessages = () => {
 
   const deleteMessage = async (messageId) => {
     if (!window.confirm('Delete this message?')) return;
-    
-    const authHeader = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
-
     try {
       await axios.delete(`${API_URL}/message/${messageId}`, authHeader);
       toast.success('Message deleted');
@@ -105,7 +95,7 @@ const ParentMessages = () => {
       <nav aria-label="breadcrumb" className="mb-3">
         <ol className="breadcrumb">
           <li className="breadcrumb-item fw-bold">
-            <Link to="/parent-dashboard">Dashboard</Link>
+            <Link to="/teacher-dashboard">Dashboard</Link>
           </li>
           <li className="breadcrumb-item-active">/ Messages</li>
         </ol>
@@ -159,6 +149,7 @@ const ParentMessages = () => {
                       className={`list-group-item list-group-item-action ${!message.isRead ? 'bg-light' : ''}`}
                       onClick={() => {
                         if (!message.isRead) markAsRead(message._id);
+                        setSelectedMessage(message);
                       }}
                       style={{ cursor: 'pointer' }}
                     >
@@ -215,4 +206,4 @@ const ParentMessages = () => {
   );
 };
 
-export default ParentMessages;
+export default TeacherMessages;
