@@ -7,22 +7,18 @@ import axios from 'axios';
 import { API_URL } from '../../config';
 
 const AdminMessages = () => {
-  // ‚úÖ REMOVED: unused 'user'
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
-  // ‚úÖ REMOVED: unused 'selectedMessage'
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('inbox');
   const [formData, setFormData] = useState({
     recipientType: 'all',
     recipientIds: [],
     subject: '',
     message: '',
-    priority: 'medium',
-    sendEmail: false,
-    sendSMS: false
+    priority: 'medium'
   });
   const [recipients, setRecipients] = useState({
     teachers: [],
@@ -30,50 +26,28 @@ const AdminMessages = () => {
     students: []
   });
 
-  // ‚úÖ FIXED: authHeader is now inside useCallback
-  const fetchMessages = useCallback(async () => {
-    const authHeader = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
+  const authHeader = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
 
+  // Fetch messages
+  const fetchMessages = useCallback(async () => {
     setLoading(true);
     try {
-      setMessages([
-        {
-          _id: '1',
-          from: 'John Teacher',
-          fromRole: 'teacher',
-          subject: 'Parent-Teacher Meeting',
-          message: 'We would like to invite you to the parent-teacher meeting on Friday at 2pm.',
-          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          read: false,
-          priority: 'high',
-          recipientType: 'parents'
-        },
-        {
-          _id: '2',
-          from: 'Admin',
-          fromRole: 'admin',
-          subject: 'School Holiday Announcement',
-          message: 'The school will be closed next Monday for a public holiday.',
-          date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          read: true,
-          priority: 'medium',
-          recipientType: 'all'
-        },
-        {
-          _id: '3',
-          from: 'Jane Parent',
-          fromRole: 'parent',
-          subject: 'Question about fees',
-          message: 'I would like to inquire about the school fees structure for next term.',
-          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          read: false,
-          priority: 'low',
-          recipientType: 'admin'
-        }
-      ]);
+      const endpoint = filter === 'sent' ? 'sent' : 'inbox';
+      const res = await axios.get(`${API_URL}/message/${endpoint}`, authHeader);
+      setMessages(res.data || []);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast.error('Failed to load messages');
+    } finally {
+      setLoading(false);
+    }
+  }, [filter]);
 
+  // Fetch recipients for compose
+  const fetchRecipients = useCallback(async () => {
+    try {
       const [teachersRes, parentsRes, studentsRes] = await Promise.all([
         axios.get(`${API_URL}/teacher`, authHeader),
         axios.get(`${API_URL}/parent`, authHeader),
@@ -86,22 +60,20 @@ const AdminMessages = () => {
         students: studentsRes.data || []
       });
     } catch (error) {
-      console.error('Error fetching messages:', error);
-      toast.error('Failed to load messages');
-    } finally {
-      setLoading(false);
+      console.error('Error fetching recipients:', error);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchMessages();
-  }, [fetchMessages]);
+    fetchRecipients();
+  }, [fetchMessages, fetchRecipients]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     });
   };
 
@@ -128,38 +100,51 @@ const AdminMessages = () => {
 
     setSending(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const payload = {
+        ...formData,
+        recipientType: formData.recipientType === 'specific' ? 'specific' : formData.recipientType
+      };
+
+      const res = await axios.post(`${API_URL}/message`, payload, authHeader);
       
-      toast.success('Message sent successfully');
+      toast.success(res.data.message || 'Message sent successfully');
       setFormData({
         recipientType: 'all',
         recipientIds: [],
         subject: '',
         message: '',
-        priority: 'medium',
-        sendEmail: false,
-        sendSMS: false
+        priority: 'medium'
       });
       setShowCompose(false);
       fetchMessages();
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      toast.error(error.response?.data?.message || 'Failed to send message');
     } finally {
       setSending(false);
     }
   };
 
-  const markAsRead = (messageId) => {
-    setMessages(messages.map(msg => 
-      msg._id === messageId ? { ...msg, read: true } : msg
-    ));
+  const markAsRead = async (messageId) => {
+    try {
+      await axios.put(`${API_URL}/message/${messageId}/read`, {}, authHeader);
+      setMessages(messages.map(msg => 
+        msg._id === messageId ? { ...msg, isRead: true } : msg
+      ));
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
   };
 
-  const deleteMessage = (messageId) => {
-    if (window.confirm('Delete this message?')) {
-      setMessages(messages.filter(msg => msg._id !== messageId));
+  const deleteMessage = async (messageId) => {
+    if (!window.confirm('Delete this message?')) return;
+    try {
+      await axios.delete(`${API_URL}/message/${messageId}`, authHeader);
       toast.success('Message deleted');
+      fetchMessages();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast.error('Failed to delete message');
     }
   };
 
@@ -170,31 +155,6 @@ const AdminMessages = () => {
       low: 'bg-info text-dark'
     };
     return colors[priority] || 'bg-secondary';
-  };
-
-  const getRecipientLabel = (type) => {
-    const labels = {
-      all: 'All Users',
-      teachers: 'Teachers',
-      parents: 'Parents',
-      students: 'Students',
-      admin: 'Admin'
-    };
-    return labels[type] || type;
-  };
-
-  const filteredMessages = messages.filter(msg => {
-    if (filter === 'all') return true;
-    if (filter === 'unread') return !msg.read;
-    if (filter === 'read') return msg.read;
-    if (filter === 'sent') return msg.fromRole === 'admin';
-    if (filter === 'received') return msg.fromRole !== 'admin';
-    return true;
-  });
-
-  const getInitials = (name) => {
-    if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const getTimeAgo = (dateString) => {
@@ -211,6 +171,13 @@ const AdminMessages = () => {
     return date.toLocaleDateString();
   };
 
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const unreadCount = messages.filter(m => !m.isRead).length;
+
   return (
     <div className="container mt-2">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -225,42 +192,25 @@ const AdminMessages = () => {
       </nav>
 
       <div className="row">
+        {/* Sidebar Filters */}
         <div className="col-lg-3 mb-4">
           <div className="card border-0 shadow-sm">
             <div className="card-body p-3">
               <h6 className="text-muted text-uppercase fw-bold small mb-3">Filters</h6>
               <div className="list-group list-group-flush">
                 <button
-                  className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${filter === 'all' ? 'active bg-success text-white' : ''}`}
-                  onClick={() => setFilter('all')}
+                  className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${filter === 'inbox' ? 'active bg-success text-white' : ''}`}
+                  onClick={() => setFilter('inbox')}
                 >
-                  All Messages
-                  <span className="badge bg-secondary rounded-pill">{messages.length}</span>
-                </button>
-                <button
-                  className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${filter === 'unread' ? 'active bg-success text-white' : ''}`}
-                  onClick={() => setFilter('unread')}
-                >
-                  Unread
-                  <span className="badge bg-danger rounded-pill">{messages.filter(m => !m.read).length}</span>
-                </button>
-                <button
-                  className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${filter === 'read' ? 'active bg-success text-white' : ''}`}
-                  onClick={() => setFilter('read')}
-                >
-                  Read
+                  Inbox
+                  <span className="badge bg-danger rounded-pill">{unreadCount}</span>
                 </button>
                 <button
                   className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${filter === 'sent' ? 'active bg-success text-white' : ''}`}
                   onClick={() => setFilter('sent')}
                 >
                   Sent
-                </button>
-                <button
-                  className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${filter === 'received' ? 'active bg-success text-white' : ''}`}
-                  onClick={() => setFilter('received')}
-                >
-                  Received
+                  <span className="badge bg-secondary rounded-pill">{messages.length}</span>
                 </button>
               </div>
 
@@ -276,7 +226,9 @@ const AdminMessages = () => {
           </div>
         </div>
 
+        {/* Main Content */}
         <div className="col-lg-9">
+          {/* Compose Message */}
           {showCompose && (
             <div className="card border-success mb-4 shadow-sm">
               <div className="card-header bg-success text-white">
@@ -301,10 +253,12 @@ const AdminMessages = () => {
                       <option value="teachers">Teachers Only</option>
                       <option value="parents">Parents Only</option>
                       <option value="students">Students Only</option>
+                      <option value="admin">Admin Only</option>
+                      <option value="specific">Specific Users</option>
                     </select>
                   </div>
 
-                  {formData.recipientType !== 'all' && (
+                  {formData.recipientType === 'specific' && (
                     <div className="mb-3">
                       <label className="form-label fw-semibold">Select Recipients</label>
                       <select
@@ -315,21 +269,15 @@ const AdminMessages = () => {
                         disabled={sending}
                         style={{ height: '100px' }}
                       >
-                        {formData.recipientType === 'teachers' && 
-                          recipients.teachers.map(t => (
-                            <option key={t._id} value={t._id}>{t.name} - {t.email}</option>
-                          ))
-                        }
-                        {formData.recipientType === 'parents' && 
-                          recipients.parents.map(p => (
-                            <option key={p._id} value={p._id}>{p.name} - {p.email}</option>
-                          ))
-                        }
-                        {formData.recipientType === 'students' && 
-                          recipients.students.map(s => (
-                            <option key={s._id} value={s._id}>{s.name} - {s.admissionNumber}</option>
-                          ))
-                        }
+                        {recipients.teachers.map(t => (
+                          <option key={t._id} value={t._id}>ÔøΩÔøΩ‚ÄçÌø´ {t.name} - Teacher</option>
+                        ))}
+                        {recipients.parents.map(p => (
+                          <option key={p._id} value={p._id}>Ì±®‚ÄçÌ±©‚ÄçÌ±ß {p.name} - Parent</option>
+                        ))}
+                        {recipients.students.map(s => (
+                          <option key={s._id} value={s._id}>Ì±®‚ÄçÌæì {s.name} - Student</option>
+                        ))}
                       </select>
                       <small className="text-muted">Hold Ctrl/Cmd to select multiple</small>
                     </div>
@@ -363,54 +311,19 @@ const AdminMessages = () => {
                     />
                   </div>
 
-                  <div className="row mb-3">
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">Priority</label>
-                      <select
-                        className="form-control"
-                        name="priority"
-                        value={formData.priority}
-                        onChange={handleChange}
-                        disabled={sending}
-                      >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                      </select>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">Additional Options</label>
-                      <div className="mt-2">
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            name="sendEmail"
-                            checked={formData.sendEmail}
-                            onChange={handleChange}
-                            id="sendEmail"
-                            disabled={sending}
-                          />
-                          <label className="form-check-label" htmlFor="sendEmail">
-                            Send as Email
-                          </label>
-                        </div>
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            name="sendSMS"
-                            checked={formData.sendSMS}
-                            onChange={handleChange}
-                            id="sendSMS"
-                            disabled={sending}
-                          />
-                          <label className="form-check-label" htmlFor="sendSMS">
-                            Send as SMS
-                          </label>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">Priority</label>
+                    <select
+                      className="form-control"
+                      name="priority"
+                      value={formData.priority}
+                      onChange={handleChange}
+                      disabled={sending}
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
                   </div>
 
                   <div className="d-flex gap-2">
@@ -442,6 +355,7 @@ const AdminMessages = () => {
             </div>
           )}
 
+          {/* Messages List */}
           <div className="card border-0 shadow-sm">
             <div className="card-body p-0">
               {loading ? (
@@ -451,19 +365,19 @@ const AdminMessages = () => {
                   </div>
                   <p className="mt-2 text-muted">Loading messages...</p>
                 </div>
-              ) : filteredMessages.length === 0 ? (
+              ) : messages.length === 0 ? (
                 <div className="text-center py-5">
                   <i className="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
                   <p className="text-muted">No messages found</p>
                 </div>
               ) : (
                 <div className="list-group list-group-flush">
-                  {filteredMessages.map((message) => (
+                  {messages.map((message) => (
                     <div 
                       key={message._id}
-                      className={`list-group-item list-group-item-action ${!message.read ? 'bg-light' : ''}`}
+                      className={`list-group-item list-group-item-action ${!message.isRead ? 'bg-light' : ''}`}
                       onClick={() => {
-                        if (!message.read) markAsRead(message._id);
+                        if (!message.isRead) markAsRead(message._id);
                       }}
                       style={{ cursor: 'pointer' }}
                     >
@@ -471,7 +385,7 @@ const AdminMessages = () => {
                         <div className="me-3">
                           <div className={`rounded-circle d-flex align-items-center justify-content-center ${getPriorityColor(message.priority)}`}
                                style={{ width: '40px', height: '40px', color: 'white', fontSize: '14px' }}>
-                            {getInitials(message.from)}
+                            {getInitials(message.sender?.name || 'System')}
                           </div>
                         </div>
                         <div className="flex-grow-1">
@@ -479,7 +393,7 @@ const AdminMessages = () => {
                             <div>
                               <h6 className="mb-0 fw-semibold">
                                 {message.subject}
-                                {!message.read && (
+                                {!message.isRead && (
                                   <span className="badge bg-primary ms-2">New</span>
                                 )}
                                 <span className={`badge ms-2 ${getPriorityColor(message.priority)}`}>
@@ -487,11 +401,11 @@ const AdminMessages = () => {
                                 </span>
                               </h6>
                               <small className="text-muted">
-                                {message.from} ‚Ä¢ {message.fromRole} ‚Ä¢ To: {getRecipientLabel(message.recipientType)}
+                                From: {message.sender?.name || 'Unknown'} ‚Ä¢ {message.sender?.role || 'Unknown'}
                               </small>
                             </div>
                             <div className="text-end">
-                              <small className="text-muted d-block">{getTimeAgo(message.date)}</small>
+                              <small className="text-muted d-block">{getTimeAgo(message.createdAt)}</small>
                               <div className="mt-1">
                                 <button
                                   className="btn btn-sm btn-outline-danger"
@@ -506,7 +420,7 @@ const AdminMessages = () => {
                             </div>
                           </div>
                           <p className="mb-0 small text-muted mt-1">
-                            {message.message.length > 150 ? `${message.message.substring(0, 150)}...` : message.message}
+                            {message.message?.length > 150 ? `${message.message.substring(0, 150)}...` : message.message}
                           </p>
                         </div>
                       </div>
