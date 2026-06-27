@@ -7,7 +7,8 @@ import axios from 'axios';
 import { API_URL } from '../../config';
 
 const AdminMessages = () => {
-  const { token, user } = useContext(AuthContext);
+  // âœ… REMOVED unused 'user'
+  const { token } = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -26,12 +27,12 @@ const AdminMessages = () => {
     students: []
   });
 
-  const authHeader = {
-    headers: { Authorization: `Bearer ${token}` }
-  };
-
-  // Fetch messages
+  // âœ… FIXED: authHeader is now inside useCallback
   const fetchMessages = useCallback(async () => {
+    const authHeader = {
+      headers: { Authorization: `Bearer ${token}` }
+    };
+
     setLoading(true);
     try {
       const endpoint = filter === 'sent' ? 'sent' : 'inbox';
@@ -43,10 +44,14 @@ const AdminMessages = () => {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, token]);
 
-  // Fetch recipients for compose
+  // âœ… FIXED: authHeader is now inside useCallback
   const fetchRecipients = useCallback(async () => {
+    const authHeader = {
+      headers: { Authorization: `Bearer ${token}` }
+    };
+
     try {
       const [teachersRes, parentsRes, studentsRes] = await Promise.all([
         axios.get(`${API_URL}/teacher`, authHeader),
@@ -62,7 +67,7 @@ const AdminMessages = () => {
     } catch (error) {
       console.error('Error fetching recipients:', error);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchMessages();
@@ -99,6 +104,10 @@ const AdminMessages = () => {
     }
 
     setSending(true);
+    const authHeader = {
+      headers: { Authorization: `Bearer ${token}` }
+    };
+
     try {
       const payload = {
         ...formData,
@@ -126,6 +135,10 @@ const AdminMessages = () => {
   };
 
   const markAsRead = async (messageId) => {
+    const authHeader = {
+      headers: { Authorization: `Bearer ${token}` }
+    };
+
     try {
       await axios.put(`${API_URL}/message/${messageId}/read`, {}, authHeader);
       setMessages(messages.map(msg => 
@@ -138,6 +151,11 @@ const AdminMessages = () => {
 
   const deleteMessage = async (messageId) => {
     if (!window.confirm('Delete this message?')) return;
+    
+    const authHeader = {
+      headers: { Authorization: `Bearer ${token}` }
+    };
+
     try {
       await axios.delete(`${API_URL}/message/${messageId}`, authHeader);
       toast.success('Message deleted');
@@ -270,7 +288,7 @@ const AdminMessages = () => {
                         style={{ height: '100px' }}
                       >
                         {recipients.teachers.map(t => (
-                          <option key={t._id} value={t._id}>ï¿½ï¿½â€í¿« {t.name} - Teacher</option>
+                          <option key={t._id} value={t._id}>í±¨â€í¿« {t.name} - Teacher</option>
                         ))}
                         {recipients.parents.map(p => (
                           <option key={p._id} value={p._id}>í±¨â€í±©â€í±§ {p.name} - Parent</option>
