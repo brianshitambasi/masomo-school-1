@@ -28,7 +28,9 @@ import Parents from './components/admin/Parents';
 import AdminNotifications from './components/admin/AdminNotifications';
 import AdminProfile from './components/admin/AdminProfile';
 import AdminSettings from './components/admin/AdminSettings';
-import AdminMessages from './components/admin/AdminMessages'; // ✅ ADDED
+import AdminMessages from './components/admin/AdminMessages';
+import AdminAssignments from './components/admin/AdminAssignments';
+import AdminAttendance from './components/admin/AdminAttendance'; // ✅ ADDED
 
 // Admin Forms
 import ClassAdd from './components/admin/forms/ClassAdd';
@@ -106,7 +108,9 @@ function App() {
             <Route path='notifications' element={<AdminNotifications />} />
             <Route path='profile' element={<AdminProfile />} />
             <Route path='settings' element={<AdminSettings />} />
-            <Route path='messages' element={<AdminMessages />} /> {/* ✅ ADDED */}
+            <Route path='messages' element={<AdminMessages />} />
+            <Route path='assignments' element={<AdminAssignments />} />
+            <Route path='attendance' element={<AdminAttendance />} /> {/* ✅ ADDED */}
           </Route>
 
           {/* TEACHER ROUTES */}
