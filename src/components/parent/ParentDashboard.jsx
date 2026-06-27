@@ -3,6 +3,7 @@ import { AuthContext } from '../../context/AuthContext'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import axios from 'axios'
+import { API_URL } from '../../config'
 
 const ParentDashboard = () => {
   const { token, user } = useContext(AuthContext)
@@ -12,9 +13,8 @@ const ParentDashboard = () => {
     totalAssignments: 0,
     pendingAssignments: 0
   })
-  const API_URL = 'https://schools-gngz.onrender.com'
 
-  // FIXED: authHeader is now INSIDE useEffect
+  // âœ… FIXED: authHeader is now INSIDE useEffect
   useEffect(() => {
     const authHeader = {
       headers: { Authorization: `Bearer ${token}` }
@@ -40,17 +40,31 @@ const ParentDashboard = () => {
       }
     }
     fetchData()
-  }, [token, user]) // Only token and user as dependencies
+  }, [token, user]) // âœ… Only token and user as dependencies
 
   return (
     <div className="container-fluid px-4 py-3">
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="row mb-4">
         <div className="col-12">
-          <div className="card border-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', borderRadius: '15px' }}>
+          <div className="card border-0 shadow-sm" style={{ 
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', 
+            borderRadius: '15px' 
+          }}>
             <div className="card-body p-4">
-              <h2 className="text-white fw-bold mb-2"><i className="bi bi-house-door-fill me-2"></i>Welcome, {user?.name || 'Parent'}! .</h2>
-              <p className="text-white-50 mb-0"><i className="bi bi-calendar3 me-2"></i>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <h2 className="text-white fw-bold mb-2">
+                <i className="bi bi-house-door-fill me-2"></i>
+                Welcome, {user?.name || 'Parent'}! í±‹
+              </h2>
+              <p className="text-white-50 mb-0">
+                <i className="bi bi-calendar3 me-2"></i>
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
             </div>
           </div>
         </div>
@@ -62,9 +76,17 @@ const ParentDashboard = () => {
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 className="text-uppercase text-muted fw-bold small mb-2">Children</h6>
-                  {loading ? <div className="spinner-border spinner-border-sm text-primary" role="status"><span className="visually-hidden">Loading...</span></div> : <h2 className="fw-bold mb-0">{stats.totalChildren}</h2>}
+                  {loading ? (
+                    <div className="spinner-border spinner-border-sm text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  ) : (
+                    <h2 className="fw-bold mb-0">{stats.totalChildren}</h2>
+                  )}
                 </div>
-                <div className="bg-primary bg-opacity-10 p-3 rounded-circle"><i className="bi bi-people-fill fs-2 text-primary"></i></div>
+                <div className="bg-primary bg-opacity-10 p-3 rounded-circle">
+                  <i className="bi bi-people-fill fs-2 text-primary"></i>
+                </div>
               </div>
             </div>
           </div>
@@ -75,9 +97,17 @@ const ParentDashboard = () => {
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 className="text-uppercase text-muted fw-bold small mb-2">Assignments</h6>
-                  {loading ? <div className="spinner-border spinner-border-sm text-warning" role="status"><span className="visually-hidden">Loading...</span></div> : <h2 className="fw-bold mb-0">{stats.totalAssignments}</h2>}
+                  {loading ? (
+                    <div className="spinner-border spinner-border-sm text-warning" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  ) : (
+                    <h2 className="fw-bold mb-0">{stats.totalAssignments}</h2>
+                  )}
                 </div>
-                <div className="bg-warning bg-opacity-10 p-3 rounded-circle"><i className="bi bi-journal-bookmark-fill fs-2 text-warning"></i></div>
+                <div className="bg-warning bg-opacity-10 p-3 rounded-circle">
+                  <i className="bi bi-journal-bookmark-fill fs-2 text-warning"></i>
+                </div>
               </div>
             </div>
           </div>
@@ -88,9 +118,17 @@ const ParentDashboard = () => {
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 className="text-uppercase text-muted fw-bold small mb-2">Pending</h6>
-                  {loading ? <div className="spinner-border spinner-border-sm text-danger" role="status"><span className="visually-hidden">Loading...</span></div> : <h2 className="fw-bold mb-0">{stats.pendingAssignments}</h2>}
+                  {loading ? (
+                    <div className="spinner-border spinner-border-sm text-danger" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  ) : (
+                    <h2 className="fw-bold mb-0">{stats.pendingAssignments}</h2>
+                  )}
                 </div>
-                <div className="bg-danger bg-opacity-10 p-3 rounded-circle"><i className="bi bi-clock-fill fs-2 text-danger"></i></div>
+                <div className="bg-danger bg-opacity-10 p-3 rounded-circle">
+                  <i className="bi bi-clock-fill fs-2 text-danger"></i>
+                </div>
               </div>
             </div>
           </div>

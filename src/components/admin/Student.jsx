@@ -11,19 +11,18 @@ const Student = () => {
     const [loading, setLoading] = useState(true)
     const { token } = useContext(AuthContext)
     const navigate = useNavigate()
-    
-    // ✅ FIXED: authHeader is now INSIDE useEffect
-    useEffect(() => {
-        const authHeader = {
-            headers: { Authorization: `Bearer ${token}` }
-        }
 
-        const FetchStudents = async () => {
+    // ✅ FIXED: Added token as dependency
+    useEffect(() => {
+        const fetchStudents = async () => {
+            const authHeader = {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+
             setLoading(true)
             try {
                 toast.info("Loading Students...")
                 const res = await axios.get(`${API_URL}/student`, authHeader)
-                console.log('Students fetched:', res.data)
                 setStudents(res.data)
                 toast.dismiss()
             } catch (error) {
@@ -34,13 +33,14 @@ const Student = () => {
                 setLoading(false)
             }
         }
-        FetchStudents()
+        fetchStudents()
     }, [token]) // ✅ Added token as dependency
 
     const handleDelete = async (id) => {
         const authHeader = {
             headers: { Authorization: `Bearer ${token}` }
         }
+
         if (window.confirm('Delete this student?')) {
             try {
                 toast.warning('Deleting student...')
@@ -72,12 +72,8 @@ const Student = () => {
 
             <nav aria-label='breadcrumb' className='mb-3'>
                 <ol className='breadcrumb'>
-                    <li className='breadcrumb-item fw-bold'>
-                        <Link to='/admin-dashboard'>Dashboard</Link>
-                    </li>
-                    <li className='breadcrumb-item-active' aria-current='page'>
-                        / Students
-                    </li>
+                    <li className='breadcrumb-item fw-bold'><Link to='/admin-dashboard'>Dashboard</Link></li>
+                    <li className='breadcrumb-item-active'>/ Students</li>
                 </ol>
             </nav>
 
@@ -86,16 +82,10 @@ const Student = () => {
                     <h5 className='text-success'>
                         <i className='bi bi-people-fill me-2'></i>
                         Students List
-                        {!loading && (
-                            <span className="badge bg-success ms-2">{students.length}</span>
-                        )}
+                        {!loading && <span className="badge bg-success ms-2">{students.length}</span>}
                     </h5>
-                    <button 
-                        className='btn btn-success' 
-                        onClick={() => navigate('/admin-dashboard/students/add')}
-                    >
-                        <i className='bi bi-plus-circle me-2'></i>
-                        Add Student
+                    <button className='btn btn-success' onClick={() => navigate('/admin-dashboard/students/add')}>
+                        <i className='bi bi-plus-circle me-2'></i>Add Student
                     </button>
                 </div>
 
@@ -109,11 +99,9 @@ const Student = () => {
                         </div>
                     ) : students.length === 0 ? (
                         <div className="alert alert-warning text-center">
-                            <i className='bi bi-exclamation-circle me-2'></i>
-                            No Students Found!
+                            <i className='bi bi-exclamation-circle me-2'></i>No Students Found!
                             <Link to="/admin-dashboard/students/add" className="ms-3">
-                                <i className="bi bi-plus-circle me-1"></i>
-                                Add your first student
+                                <i className="bi bi-plus-circle me-1"></i>Add your first student
                             </Link>
                         </div>
                     ) : (
@@ -141,12 +129,7 @@ const Student = () => {
                                                     src={getImageUrl(student.photo)} 
                                                     alt={student.name}
                                                     className="rounded-circle border border-success"
-                                                    style={{ 
-                                                        width: '50px', 
-                                                        height: '50px', 
-                                                        objectFit: 'cover',
-                                                        borderWidth: '2px'
-                                                    }}
+                                                    style={{ width: '50px', height: '50px', objectFit: 'cover', borderWidth: '2px' }}
                                                     onError={(e) => {
                                                         e.target.style.display = 'none'
                                                         const parent = e.target.parentElement
@@ -164,9 +147,7 @@ const Student = () => {
                                                 </div>
                                             )}
                                         </td>
-                                        <td>
-                                            <strong>{student.name}</strong>
-                                        </td>
+                                        <td><strong>{student.name}</strong></td>
                                         <td>{student.admissionNumber || 'N/A'}</td>
                                         <td>
                                             <span className={`badge ${student.gender === 'Male' ? 'bg-primary' : 'bg-pink'}`}>
@@ -176,9 +157,7 @@ const Student = () => {
                                         <td>{student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A'}</td>
                                         <td>
                                             {student.classroom ? (
-                                                <span className="badge bg-info">
-                                                    {student.classroom.name || 'N/A'}
-                                                </span>
+                                                <span className="badge bg-info">{student.classroom.name || 'N/A'}</span>
                                             ) : (
                                                 <span className="text-muted">N/A</span>
                                             )}
@@ -194,18 +173,10 @@ const Student = () => {
                                             )}
                                         </td>
                                         <td>
-                                            <button 
-                                                className='btn btn-sm btn-warning me-2' 
-                                                onClick={() => handleEdit(student)}
-                                                title="Edit Student"
-                                            >
+                                            <button className='btn btn-sm btn-warning me-2' onClick={() => handleEdit(student)} title="Edit Student">
                                                 <i className='bi bi-pencil-square'></i>
                                             </button>
-                                            <button 
-                                                className='btn btn-sm btn-danger'
-                                                onClick={() => handleDelete(student._id)}
-                                                title="Delete Student"
-                                            >
+                                            <button className='btn btn-sm btn-danger' onClick={() => handleDelete(student._id)} title="Delete Student">
                                                 <i className='bi bi-trash'></i>
                                             </button>
                                         </td>
@@ -218,17 +189,9 @@ const Student = () => {
             </div>
 
             <style jsx="true">{`
-                .bg-pink {
-                    background-color: #d63384;
-                    color: white;
-                }
-                .table td {
-                    vertical-align: middle;
-                }
-                .badge {
-                    font-size: 0.75rem;
-                    padding: 0.35rem 0.65rem;
-                }
+                .bg-pink { background-color: #d63384; color: white; }
+                .table td { vertical-align: middle; }
+                .badge { font-size: 0.75rem; padding: 0.35rem 0.65rem; }
             `}</style>
         </div>
     )

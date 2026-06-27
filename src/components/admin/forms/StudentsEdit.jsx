@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
+import { API_URL } from '../../../config';
 
 const StudentsEdit = () => {
   const { token } = useContext(AuthContext);
@@ -23,40 +24,29 @@ const StudentsEdit = () => {
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_URL = 'https://schools-gngz.onrender.com';
-
-  // FIXED: Added token to dependency array
+  // ✅ FIXED: Added token as dependency
   useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/classroom`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setClassrooms(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
-        console.error('Error fetching classrooms:', error);
-        toast.error('Failed to load classrooms');
-      }
-    };
+    const fetchData = async () => {
+      const authHeader = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
 
-    const fetchParents = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/parent`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setParents(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
-        console.error('Error fetching parents:', error);
-        toast.error('Failed to load parents');
-      }
-    };
-
-    const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([fetchClasses(), fetchParents()]);
-      setIsLoading(false);
+      try {
+        const [classroomsRes, parentsRes] = await Promise.all([
+          axios.get(`${API_URL}/classroom`, authHeader),
+          axios.get(`${API_URL}/parent`, authHeader)
+        ]);
+        setClassrooms(classroomsRes.data || []);
+        setParents(parentsRes.data || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load form data');
+      } finally {
+        setIsLoading(false);
+      }
     };
-    loadData();
+    fetchData();
   }, [token]); // ✅ Added token as dependency
 
   useEffect(() => {
