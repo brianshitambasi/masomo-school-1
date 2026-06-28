@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import axios from 'axios'
+import { API_URL } from '../../config'
 
 const AdminDashboard = () => {
     const { token, user } = useContext(AuthContext)
@@ -21,13 +22,9 @@ const AdminDashboard = () => {
             totalStudentsInClasses: 0,
             teachersWithoutClass: 0,
             classesWithoutTeacher: 0
-        },
-        recentActivities: []
+        }
     })
 
-    const API_URL = 'https://schools-gngz.onrender.com'
-
-    // FIXED: fetchDashboardData inside useEffect
     useEffect(() => {
         const fetchDashboardData = async () => {
             setLoading(true)
@@ -35,11 +32,13 @@ const AdminDashboard = () => {
                 const authHeader = {
                     headers: { Authorization: `Bearer ${token}` }
                 }
+
+                // Fetch all data in parallel with error handling for each
                 const [teachersRes, studentsRes, parentsRes, classroomsRes] = await Promise.all([
-                    axios.get(`${API_URL}/teacher`, authHeader),
-                    axios.get(`${API_URL}/student`, authHeader),
-                    axios.get(`${API_URL}/parent`, authHeader),
-                    axios.get(`${API_URL}/classroom`, authHeader)
+                    axios.get(`${API_URL}/teacher`, authHeader).catch(err => ({ data: [] })),
+                    axios.get(`${API_URL}/student`, authHeader).catch(err => ({ data: [] })),
+                    axios.get(`${API_URL}/parent`, authHeader).catch(err => ({ data: [] })),
+                    axios.get(`${API_URL}/classroom`, authHeader).catch(err => ({ data: [] }))
                 ])
 
                 const teachers = teachersRes.data || []
@@ -131,25 +130,26 @@ const AdminDashboard = () => {
         { id: 1, title: 'Add Student', icon: 'bi-person-plus', link: '/admin-dashboard/students/add', color: 'success' },
         { id: 2, title: 'Add Teacher', icon: 'bi-person-badge', link: '/admin-dashboard/teachers/add', color: 'primary' },
         { id: 3, title: 'Add Parent', icon: 'bi-person-add', link: '/admin-dashboard/parents/add', color: 'warning' },
-        { id: 4, title: 'Add Class', icon: 'bi-building-add', link: '/admin-dashboard/classes/add', color: 'info' },
+        { id: 4, title: 'Add Class', icon: 'bi-building-add', link: '/admin-dashboard/classes/add', color: 'info' }
     ]
 
     return (
         <div className="container-fluid px-4 py-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
+            {/* Welcome Section */}
             <div className="row mb-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm" style={{
                         background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-                        borderRadius: '15px',
+                        borderRadius: '15px'
                     }}>
                         <div className="card-body p-4">
                             <div className="row align-items-center">
                                 <div className="col-md-8">
                                     <h2 className="text-white fw-bold mb-2">
                                         <i className="bi bi-house-door-fill me-2"></i>
-                                        Welcome back, {user?.name || 'Admin'}! 
+                                        Welcome back, {user?.name || 'Admin'}! í±‹
                                     </h2>
                                     <p className="text-white-50 mb-0">
                                         <i className="bi bi-calendar3 me-2"></i>
@@ -183,6 +183,7 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
+            {/* Stats Cards */}
             <div className="row g-4 mb-4">
                 {dashboardCards.map((card) => (
                     <div className="col-xl-3 col-lg-6 col-md-6" key={card.id}>
@@ -227,7 +228,8 @@ const AdminDashboard = () => {
                 ))}
             </div>
 
-            <div className="row g-4 mb-4">
+            {/* Quick Actions */}
+            <div className="row g-4">
                 <div className="col-lg-6">
                     <div className="card border-0 shadow-sm h-100">
                         <div className="card-header bg-white border-0 pt-3">
@@ -258,36 +260,27 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
+                {/* Recent Activity */}
                 <div className="col-lg-6">
                     <div className="card border-0 shadow-sm h-100">
-                        <div className="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+                        <div className="card-header bg-white border-0 pt-3">
                             <h5 className="fw-bold mb-0">
                                 <i className="bi bi-clock-history text-info me-2"></i>
                                 Recent Activity
                             </h5>
-                            <small className="text-muted">
-                                {loading ? 'Loading...' : `${dashboardData.recentActivities?.length || 0} activities`}
-                            </small>
                         </div>
                         <div className="card-body">
-                            {loading ? (
-                                <div className="text-center py-4">
-                                    <div className="spinner-border text-info" role="status">
-                                        <span className="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-center py-4">
-                                    <i className="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
-                                    <p className="text-muted">No recent activities</p>
-                                </div>
-                            )}
+                            <div className="text-center py-4">
+                                <i className="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                                <p className="text-muted">No recent activities</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="row">
+            {/* Footer */}
+            <div className="row mt-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm">
                         <div className="card-body text-center py-3">
