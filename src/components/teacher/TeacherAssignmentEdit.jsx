@@ -7,7 +7,7 @@ import axios from 'axios';
 import { API_URL } from '../../config';
 
 const TeacherAssignmentEdit = () => {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,6 @@ const TeacherAssignmentEdit = () => {
     classroom: ''
   });
 
-  // Fetch assignment details and classrooms
   useEffect(() => {
     const fetchData = async () => {
       const authHeader = {
@@ -31,7 +30,16 @@ const TeacherAssignmentEdit = () => {
       try {
         // Fetch classrooms
         const classroomsRes = await axios.get(`${API_URL}/classroom`, authHeader);
-        const teacherClassrooms = classroomsRes.data.filter(c => c.teacher === token);
+        // ✅ FIXED: Filter classrooms properly
+        const teacherClassrooms = classroomsRes.data.filter(c => {
+          if (c.teacher && typeof c.teacher === 'object' && c.teacher._id) {
+            return c.teacher._id === user?.teacherId || c.teacher._id === user?.id;
+          }
+          if (typeof c.teacher === 'string') {
+            return c.teacher === user?.teacherId || c.teacher === user?.id;
+          }
+          return false;
+        });
         setClassrooms(teacherClassrooms);
 
         // Fetch assignment details
@@ -56,7 +64,7 @@ const TeacherAssignmentEdit = () => {
     if (id && token) {
       fetchData();
     }
-  }, [id, token, navigate]);
+  }, [id, token, navigate, user]);
 
   const handleChange = (e) => {
     setFormData({
@@ -198,10 +206,10 @@ const TeacherAssignmentEdit = () => {
                 ))}
               </select>
               {classrooms.length === 0 && (
-                <small className="text-warning">
-                  <i className="bi bi-exclamation-triangle me-1"></i>
+                <div className="alert alert-warning mt-2">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
                   No classrooms assigned yet. Please contact admin.
-                </small>
+                </div>
               )}
             </div>
           </div>

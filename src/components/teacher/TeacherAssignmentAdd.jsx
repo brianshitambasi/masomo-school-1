@@ -7,7 +7,7 @@ import axios from 'axios';
 import { API_URL } from '../../config';
 
 const TeacherAssignmentAdd = () => {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext); // ✅ Added user
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [classrooms, setClassrooms] = useState([]);
@@ -18,25 +18,48 @@ const TeacherAssignmentAdd = () => {
     classroom: ''
   });
 
-  // ✅ FIXED: authHeader is now INSIDE useEffect
   useEffect(() => {
-    const authHeader = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
-
     const fetchClassrooms = async () => {
+      const authHeader = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
+
       try {
         const res = await axios.get(`${API_URL}/classroom`, authHeader);
-        // Filter classrooms where this teacher is assigned
-        const teacherClassrooms = res.data.filter(c => c.teacher === token);
+        console.log('All classrooms:', res.data);
+        console.log('User:', user);
+        console.log('Teacher ID from user:', user?.teacherId);
+        
+        // ✅ FIXED: Compare teacher ID correctly
+        // The classroom.teacher can be an ObjectId or a populated object
+        const teacherClassrooms = res.data.filter(c => {
+          // If teacher is populated (object), check _id
+          if (c.teacher && typeof c.teacher === 'object' && c.teacher._id) {
+            return c.teacher._id === user?.teacherId || c.teacher._id === user?.id;
+          }
+          // If teacher is a string (ObjectId), compare directly
+          if (typeof c.teacher === 'string') {
+            return c.teacher === user?.teacherId || c.teacher === user?.id;
+          }
+          return false;
+        });
+        
+        console.log('Filtered classrooms:', teacherClassrooms);
         setClassrooms(teacherClassrooms);
+        
+        if (teacherClassrooms.length === 0) {
+          toast.warning('No classrooms assigned to you. Please contact admin.');
+        }
       } catch (error) {
         console.error('Error fetching classrooms:', error);
         toast.error('Failed to load classrooms');
       }
     };
-    fetchClassrooms();
-  }, [token]); // ✅ Only token as dependency
+
+    if (token && user) {
+      fetchClassrooms();
+    }
+  }, [token, user]);
 
   const handleChange = (e) => {
     setFormData({
@@ -167,10 +190,10 @@ const TeacherAssignmentAdd = () => {
                 ))}
               </select>
               {classrooms.length === 0 && (
-                <small className="text-warning">
-                  <i className="bi bi-exclamation-triangle me-1"></i>
+                <div className="alert alert-warning mt-2">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
                   No classrooms assigned yet. Please contact admin.
-                </small>
+                </div>
               )}
             </div>
           </div>
