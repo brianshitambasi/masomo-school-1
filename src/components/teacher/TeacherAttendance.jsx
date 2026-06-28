@@ -7,7 +7,7 @@ import axios from 'axios';
 import { API_URL } from '../../config';
 
 const TeacherAttendance = () => {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [classrooms, setClassrooms] = useState([]);
@@ -17,7 +17,7 @@ const TeacherAttendance = () => {
   const [attendanceData, setAttendanceData] = useState({});
   const [summary, setSummary] = useState(null);
 
-  // ✅ FIXED: authHeader is now inside useEffect
+  // Fetch teacher's classrooms
   useEffect(() => {
     const authHeader = {
       headers: { Authorization: `Bearer ${token}` }
@@ -26,16 +26,29 @@ const TeacherAttendance = () => {
     const fetchClassrooms = async () => {
       try {
         const res = await axios.get(`${API_URL}/classroom`, authHeader);
-        setClassrooms(res.data || []);
+        // Filter classrooms where this teacher is assigned
+        const teacherClassrooms = res.data.filter(c => {
+          if (c.teacher && typeof c.teacher === 'object' && c.teacher._id) {
+            return c.teacher._id === user?.teacherId || c.teacher._id === user?.id;
+          }
+          if (typeof c.teacher === 'string') {
+            return c.teacher === user?.teacherId || c.teacher === user?.id;
+          }
+          return false;
+        });
+        setClassrooms(teacherClassrooms);
+        if (teacherClassrooms.length > 0) {
+          setSelectedClassroom(teacherClassrooms[0]._id);
+        }
       } catch (error) {
         console.error('Error fetching classrooms:', error);
         toast.error('Failed to load classrooms');
       }
     };
     fetchClassrooms();
-  }, [token]);
+  }, [token, user]);
 
-  // ✅ FIXED: fetchAttendance wrapped in useCallback
+  // Fetch attendance for selected classroom and date
   const fetchAttendance = useCallback(async () => {
     if (!selectedClassroom || !attendanceDate) return;
     
@@ -60,14 +73,21 @@ const TeacherAttendance = () => {
       setAttendanceData(attendanceMap);
       setSummary(res.data.summary);
     } catch (error) {
-      console.error('Error fetching attendance:', error);
-      toast.error('Failed to load attendance data');
+      if (error.response?.status === 403) {
+        toast.error('You do not have permission to view attendance. Please contact admin.');
+      } else if (error.response?.status === 404) {
+        // No attendance records yet - this is fine
+        setStudents([]);
+        setSummary(null);
+      } else {
+        console.error('Error fetching attendance:', error);
+        toast.error('Failed to load attendance data');
+      }
     } finally {
       setLoading(false);
     }
   }, [selectedClassroom, attendanceDate, token]);
 
-  // ✅ FIXED: Added fetchAttendance as dependency
   useEffect(() => {
     fetchAttendance();
   }, [fetchAttendance]);
@@ -113,7 +133,13 @@ const TeacherAttendance = () => {
       fetchAttendance();
     } catch (error) {
       console.error('Error saving attendance:', error);
-      toast.error(error.response?.data?.message || 'Failed to save attendance');
+      if (error.response?.status === 403) {
+        toast.error('You do not have permission to mark attendance. Please contact admin.');
+      } else if (error.response?.status === 404) {
+        toast.error('Classroom not found. Please select a valid classroom.');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to save attendance');
+      }
     } finally {
       setSaving(false);
     }
@@ -167,6 +193,12 @@ const TeacherAttendance = () => {
                   </option>
                 ))}
               </select>
+              {classrooms.length === 0 && (
+                <small className="text-warning d-block mt-1">
+                  <i className="bi bi-exclamation-triangle me-1"></i>
+                  No classrooms assigned. Please contact admin.
+                </small>
+              )}
             </div>
             <div className="col-md-4">
               <label className="form-label fw-semibold">Date</label>
@@ -183,7 +215,7 @@ const TeacherAttendance = () => {
               <button
                 type="submit"
                 className="btn btn-success w-100"
-                disabled={saving || !selectedClassroom || students.length === 0}
+                disabled={saving || !selectedClassroom || students.length === 0 || classrooms.length === 0}
               >
                 {saving ? (
                   <>
@@ -267,7 +299,7 @@ const TeacherAttendance = () => {
         ) : students.length === 0 ? (
           <div className="alert alert-info text-center">
             <i className="bi bi-info-circle me-2"></i>
-            No students found for this classroom. Select a different classroom.
+            No students found for this classroom. Select a different classroom or add students.
           </div>
         ) : (
           <div className="table-responsive">
@@ -287,7 +319,7 @@ const TeacherAttendance = () => {
                     <td>
                       {item.student.photo ? (
                         <img
-                          src={`${API_URL}/${item.student.photo}`}
+                          src={item.student.photo}
                           alt={item.student.name}
                           className="rounded-circle me-2"
                           style={{ width: '30px', height: '30px', objectFit: 'cover' }}

@@ -33,7 +33,7 @@ const Student = () => {
             }
         }
         fetchStudents()
-    }, [token]) // ✅ Added token as dependency
+    }, [token])
 
     const handleDelete = async (id) => {
         const authHeader = {
@@ -59,9 +59,18 @@ const Student = () => {
         navigate("/admin-dashboard/students/edit", { state: { studentData } })
     }
 
+    // ✅ FIXED: Better image URL handling
     const getImageUrl = (photoPath) => {
         if (!photoPath) return null
-        if (photoPath.startsWith('http')) return photoPath
+        // If it's already a full URL (Cloudinary), return as is
+        if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+            return photoPath
+        }
+        // If it's a local upload path
+        if (photoPath.startsWith('uploads/')) {
+            return `${API_URL}/${photoPath}`
+        }
+        // Default: prepend API URL
         return `${API_URL}/${photoPath}`
     }
 
