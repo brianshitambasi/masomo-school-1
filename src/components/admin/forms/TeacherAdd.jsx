@@ -4,77 +4,83 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
+import { API_URL } from '../../../config';
 
 const TeacherAdd = () => {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [subject, setSubject] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    bio: '',
+    qualifications: ''
+  });
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Use local backend URL
-  const API_URL = 'https://schools-gngz.onrender.com'; // or use your config
-
-  // Prepare auth header
-  const authHeader = {
-    headers: { 
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
-  // Handle form submission
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please upload a valid image (JPEG, PNG, GIF, or WEBP)');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+      setPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+    setUploadProgress(0);
+
     try {
       toast.info('Adding Teacher...');
-      const data = { name, subject, email, phone };
-      
-      console.log('Sending data:', data);
-      console.log('Auth header:', authHeader);
-      
-      const res = await axios.post(`${API_URL}/teacher`, data, authHeader);
-      
-      console.log('Response:', res.data);
-      
+      const formDataObj = new FormData();
+      Object.keys(formData).forEach(key => {
+        formDataObj.append(key, formData[key]);
+      });
+      if (photo) formDataObj.append('photo', photo);
+
+      const res = await axios.post(`${API_URL}/teacher`, formDataObj, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+
       toast.dismiss();
       toast.success(res.data?.message || 'Teacher added successfully');
       setLoading(false);
-      
-      // Navigate back to teachers list
       navigate('/admin-dashboard/teachers');
-      
     } catch (error) {
       setLoading(false);
       toast.dismiss();
-      
-      console.error('Full error:', error);
-      
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-        console.error('Response headers:', error.response.headers);
-        
-        const errorMessage = error.response.data?.message || 
-                           error.response.data?.msg || 
-                           'Server error occurred';
-        toast.error(`Error ${error.response.status}: ${errorMessage}`);
-        
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('Request:', error.request);
-        toast.error('Cannot connect to server. Please check if backend is running on port 3004');
-        
-      } else {
-        // Something happened in setting up the request
-        console.error('Error message:', error.message);
-        toast.error(error.message || 'Error adding teacher');
-      }
+      console.error('Add teacher error:', error);
+      toast.error(error.response?.data?.message || 'Error adding teacher');
     }
   };
 
@@ -82,18 +88,11 @@ const TeacherAdd = () => {
     <div className="container mt-2">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* Breadcrumbs */}
       <nav aria-label="breadcrumb" className="mb-3">
         <ol className="breadcrumb">
-          <li className="breadcrumb-item fw-bold">
-            <Link to="/admin-dashboard">Dashboard</Link>
-          </li>
-          <li className="breadcrumb-item fw-bold">
-            <Link to="/admin-dashboard/teachers">Teachers</Link>
-          </li>
-          <li className="breadcrumb-item-active" aria-current="page">
-            / Add Teacher
-          </li>
+          <li className="breadcrumb-item fw-bold"><Link to="/admin-dashboard">Dashboard</Link></li>
+          <li className="breadcrumb-item fw-bold"><Link to="/admin-dashboard/teachers">Teachers</Link></li>
+          <li className="breadcrumb-item-active">/ Add Teacher</li>
         </ol>
       </nav>
 
@@ -107,29 +106,17 @@ const TeacherAdd = () => {
           </Link>
         </div>
 
-        {/* Form to add a teacher */}
         <form onSubmit={handleSubmit}>
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold">Teacher Name</label>
+              <label className="form-label fw-semibold">Full Name</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter teacher name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold">Subject</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
+                name="name"
+                placeholder="Enter full name"
+                value={formData.name}
+                onChange={handleChange}
                 required
                 disabled={loading}
               />
@@ -139,9 +126,10 @@ const TeacherAdd = () => {
               <input
                 type="email"
                 className="form-control"
-                placeholder="Enter email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                placeholder="Enter email"
+                value={formData.email}
+                onChange={handleChange}
                 required
                 disabled={loading}
               />
@@ -151,32 +139,108 @@ const TeacherAdd = () => {
               <input
                 type="tel"
                 className="form-control"
-                placeholder="Enter phone number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                name="phone"
+                placeholder="Enter phone"
+                value={formData.phone}
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Subject</label>
+              <input
+                type="text"
+                className="form-control"
+                name="subject"
+                placeholder="Enter subject"
+                value={formData.subject}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Qualifications</label>
+              <input
+                type="text"
+                className="form-control"
+                name="qualifications"
+                placeholder="Enter qualifications"
+                value={formData.qualifications}
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">Photo (Cloudinary)</label>
+              <input
+                type="file"
+                className="form-control"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handlePhotoChange}
+                disabled={loading}
+              />
+              {photo && (
+                <small className="text-success d-block mt-1">
+                  <i className="bi bi-cloud-upload me-1"></i>
+                  Selected: {photo.name} ({Math.round(photo.size / 1024)} KB)
+                </small>
+              )}
+            </div>
+            <div className="col-12 mb-3">
+              <label className="form-label fw-semibold">Bio</label>
+              <textarea
+                className="form-control"
+                name="bio"
+                rows="3"
+                placeholder="Enter teacher bio"
+                value={formData.bio}
+                onChange={handleChange}
                 disabled={loading}
               />
             </div>
           </div>
-          
-          <button 
-            type="submit" 
-            className="btn btn-success"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </span>
-                Saving...
-              </>
-            ) : (
-              <>
-                <i className="bi bi-save me-2"></i>
-                Save Teacher
-              </>
-            )}
+
+          {photoPreview && (
+            <div className="row mb-3">
+              <div className="col-12">
+                <div className="card bg-light">
+                  <div className="card-body text-center">
+                    <h6 className="text-muted">Photo Preview</h6>
+                    <img 
+                      src={photoPreview} 
+                      alt="Teacher preview" 
+                      className="rounded-circle border border-success"
+                      style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {loading && uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="row mb-3">
+              <div className="col-12">
+                <div className="card bg-info bg-opacity-10">
+                  <div className="card-body">
+                    <h6 className="text-info">Uploading to Cloudinary...</h6>
+                    <div className="progress">
+                      <div 
+                        className="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                        style={{ width: `${uploadProgress}%` }}
+                      >
+                        {uploadProgress}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button type="submit" className="btn btn-success" disabled={loading}>
+            {loading ? 'Saving...' : <><i className="bi bi-cloud-upload me-2"></i>Save Teacher</>}
           </button>
         </form>
       </div>

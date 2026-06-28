@@ -1,5 +1,5 @@
 // API Configuration
-// Change this to your deployed backend URL
+// Use your deployed backend URL
 export const API_URL = 'https://schools-gngz.onrender.com';
 
 // For local development, uncomment the line below and comment the one above

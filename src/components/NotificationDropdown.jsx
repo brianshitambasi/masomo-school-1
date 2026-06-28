@@ -12,13 +12,13 @@ const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ✅ FIXED: Wrap authHeader in useMemo to prevent recreation on every render
   const authHeader = useMemo(() => ({
     headers: { Authorization: `Bearer ${token}` }
   }), [token]);
 
-  // Wrap fetchNotifications in useCallback
   const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/notification?limit=10`, authHeader);
@@ -26,20 +26,24 @@ const NotificationDropdown = () => {
       setUnreadCount(res.data.unreadCount || 0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
-  }, [authHeader]);
+  }, [authHeader, token]);
 
-  // Wrap fetchUnreadCount in useCallback
   const fetchUnreadCount = useCallback(async () => {
+    if (!token) return;
+    
     try {
       const res = await axios.get(`${API_URL}/notification/count`, authHeader);
       setUnreadCount(res.data.unreadCount || 0);
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+      console.error('Error fetching unread count:', error.message);
+      setUnreadCount(0);
     }
-  }, [authHeader]);
+  }, [authHeader, token]);
 
   useEffect(() => {
     if (token) {

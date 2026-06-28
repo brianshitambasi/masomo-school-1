@@ -19,43 +19,65 @@ const StudentsAdd = () => {
   const [selectedParent, setSelectedParent] = useState('');
   const [nationalId, setNationalId] = useState('');
   const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  // ✅ FIXED: Added token to dependency array
+  // Fetch classrooms and parents
   useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/classroom`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setClassrooms(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
-        console.error('Error fetching classrooms:', error);
-        toast.error('Failed to load classrooms');
-      }
-    };
+    const fetchData = async () => {
+      const authHeader = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
 
-    const fetchParents = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/parent`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setParents(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
-        console.error('Error fetching parents:', error);
-        toast.error('Failed to load parents');
-      }
-    };
-
-    const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([fetchClasses(), fetchParents()]);
-      setIsLoading(false);
+      try {
+        const [classroomsRes, parentsRes] = await Promise.all([
+          axios.get(`${API_URL}/classroom`, authHeader),
+          axios.get(`${API_URL}/parent`, authHeader)
+        ]);
+        setClassrooms(classroomsRes.data || []);
+        setParents(parentsRes.data || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load form data');
+      } finally {
+        setIsLoading(false);
+      }
     };
-    loadData();
-  }, [token]); // ✅ Added token as dependency
+    fetchData();
+  }, [token]);
 
+  // Handle photo selection
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please upload a valid image (JPEG, PNG, GIF, or WEBP)');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+
+      setPhoto(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Verify parent by national ID
   const verifyParent = async () => {
     if (!nationalId) {
       toast.error('Please enter a national ID');
@@ -85,15 +107,20 @@ const StudentsAdd = () => {
     }
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedParent) {
       toast.error('Please verify a parent before submitting');
       return;
     }
+
     setLoading(true);
+    setUploadProgress(0);
+    
     try {
       toast.info('Adding Student...');
+      
       const formData = new FormData();
       formData.append('name', name);
       formData.append('admissionNumber', admissionNumber);
@@ -108,10 +135,14 @@ const StudentsAdd = () => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
       });
 
       toast.dismiss();
-      toast.success(res.data?.message || 'Student added successfully');
+      toast.success(res.data?.message || 'Student added successfully with photo!');
       setLoading(false);
       navigate('/admin-dashboard/students');
     } catch (error) {
@@ -156,15 +187,37 @@ const StudentsAdd = () => {
           <div className="row">
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold">Student Name</label>
-              <input type="text" className="form-control" placeholder="Enter student name" value={name} onChange={(e) => setName(e.target.value)} required disabled={loading} />
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="Enter student name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+                disabled={loading} 
+              />
             </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold">Admission Number</label>
-              <input type="text" className="form-control" placeholder="Enter admission number" value={admissionNumber} onChange={(e) => setAdmissionNumber(e.target.value)} required disabled={loading} />
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="Enter admission number" 
+                value={admissionNumber} 
+                onChange={(e) => setAdmissionNumber(e.target.value)} 
+                required 
+                disabled={loading} 
+              />
             </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold">Gender</label>
-              <select className="form-control" value={gender} onChange={(e) => setGender(e.target.value)} required disabled={loading}>
+              <select 
+                className="form-control" 
+                value={gender} 
+                onChange={(e) => setGender(e.target.value)} 
+                required 
+                disabled={loading}
+              >
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
@@ -172,22 +225,50 @@ const StudentsAdd = () => {
             </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold">Date of Birth</label>
-              <input type="date" className="form-control" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required disabled={loading} />
+              <input 
+                type="date" 
+                className="form-control" 
+                value={dateOfBirth} 
+                onChange={(e) => setDateOfBirth(e.target.value)} 
+                required 
+                disabled={loading} 
+              />
             </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold">Classroom</label>
-              <select className="form-control" value={selectedClassroom} onChange={(e) => setSelectedClassroom(e.target.value)} required disabled={loading}>
+              <select 
+                className="form-control" 
+                value={selectedClassroom} 
+                onChange={(e) => setSelectedClassroom(e.target.value)} 
+                required 
+                disabled={loading}
+              >
                 <option value="">Select Classroom</option>
                 {classrooms.map((classroom) => (
-                  <option key={classroom._id} value={classroom._id}>{classroom.name || 'Unnamed Class'}</option>
+                  <option key={classroom._id} value={classroom._id}>
+                    {classroom.name || 'Unnamed Class'}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold">Parent National ID</label>
               <div className="input-group">
-                <input type="text" className="form-control" placeholder="Enter parent's national ID" value={nationalId} onChange={(e) => setNationalId(e.target.value)} required disabled={loading} />
-                <button type="button" className="btn btn-outline-success" onClick={verifyParent} disabled={loading || !nationalId}>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="Enter parent's national ID" 
+                  value={nationalId} 
+                  onChange={(e) => setNationalId(e.target.value)} 
+                  required 
+                  disabled={loading} 
+                />
+                <button 
+                  type="button" 
+                  className="btn btn-outline-success" 
+                  onClick={verifyParent} 
+                  disabled={loading || !nationalId}
+                >
                   <i className="bi bi-check-circle"></i> Verify
                 </button>
               </div>
@@ -198,17 +279,70 @@ const StudentsAdd = () => {
               )}
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold">Photo</label>
-              <input type="file" className="form-control" accept="image/*" onChange={(e) => setPhoto(e.target.files[0])} disabled={loading} />
+              <label className="form-label fw-semibold">Photo (Cloudinary)</label>
+              <input 
+                type="file" 
+                className="form-control" 
+                accept="image/jpeg,image/png,image/gif,image/webp" 
+                onChange={handlePhotoChange} 
+                disabled={loading} 
+              />
               {photo && (
                 <small className="text-success d-block mt-1">
-                  <i className="bi bi-image me-1"></i>Selected: {photo.name}
+                  <i className="bi bi-cloud-upload me-1"></i>
+                  Selected: {photo.name} ({Math.round(photo.size / 1024)} KB)
                 </small>
               )}
+              <small className="text-muted d-block">
+                <i className="bi bi-info-circle me-1"></i>
+                Supported: JPG, PNG, GIF, WEBP (Max 5MB)
+              </small>
             </div>
           </div>
+
+          {/* Photo Preview */}
+          {photoPreview && (
+            <div className="row mb-3">
+              <div className="col-12">
+                <div className="card bg-light">
+                  <div className="card-body text-center">
+                    <h6 className="text-muted">Photo Preview</h6>
+                    <img 
+                      src={photoPreview} 
+                      alt="Student preview" 
+                      className="rounded-circle border border-success"
+                      style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                    />
+                    <p className="text-muted small mt-2">Photo will be uploaded to Cloudinary</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Upload Progress */}
+          {loading && uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="row mb-3">
+              <div className="col-12">
+                <div className="card bg-info bg-opacity-10">
+                  <div className="card-body">
+                    <h6 className="text-info">Uploading to Cloudinary...</h6>
+                    <div className="progress">
+                      <div 
+                        className="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                        style={{ width: `${uploadProgress}%` }}
+                      >
+                        {uploadProgress}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <button type="submit" className="btn btn-success" disabled={loading || !selectedParent}>
-            {loading ? 'Saving...' : <><i className="bi bi-save me-2"></i>Save Student</>}
+            {loading ? 'Saving...' : <><i className="bi bi-cloud-upload me-2"></i>Save Student</>}
           </button>
         </form>
       </div>

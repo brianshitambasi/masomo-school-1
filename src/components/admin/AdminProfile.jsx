@@ -10,6 +10,7 @@ const AdminProfile = () => {
   const { token, user, setUser } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -20,6 +21,8 @@ const AdminProfile = () => {
     newPassword: '',
     confirmPassword: ''
   });
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const authHeader = {
     headers: { Authorization: `Bearer ${token}` }
@@ -32,9 +35,29 @@ const AdminProfile = () => {
     });
   };
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please upload a valid image (JPEG, PNG, GIF, or WEBP)');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+      setPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setUploadProgress(0);
 
     if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
       toast.error('Passwords do not match');
@@ -43,22 +66,31 @@ const AdminProfile = () => {
     }
 
     try {
-      const updateData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address
-      };
-
+      const formDataObj = new FormData();
+      formDataObj.append('name', formData.name);
+      formDataObj.append('email', formData.email);
+      formDataObj.append('phone', formData.phone);
+      formDataObj.append('address', formData.address);
+      if (photo) formDataObj.append('photo', photo);
+      
       if (formData.newPassword) {
-        updateData.password = formData.newPassword;
-        updateData.currentPassword = formData.currentPassword;
+        formDataObj.append('password', formData.newPassword);
+        formDataObj.append('currentPassword', formData.currentPassword);
       }
 
       const res = await axios.put(
         `${API_URL}/user/profile`,
-        updateData,
-        authHeader
+        formDataObj,
+        {
+          headers: {
+            ...authHeader.headers,
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        }
       );
 
       toast.success(res.data?.message || 'Profile updated successfully');
@@ -68,10 +100,13 @@ const AdminProfile = () => {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        address: formData.address
+        address: formData.address,
+        photo: res.data?.user?.photo || user?.photo
       });
 
       setEditMode(false);
+      setPhoto(null);
+      setPhotoPreview(null);
       setFormData({
         ...formData,
         currentPassword: '',
@@ -102,10 +137,19 @@ const AdminProfile = () => {
         <div className="col-lg-4 mb-4">
           <div className="card border-0 shadow-sm">
             <div className="card-body text-center p-4">
-              <div className="rounded-circle bg-success d-flex align-items-center justify-content-center mx-auto mb-3"
-                   style={{ width: '120px', height: '120px', fontSize: '48px', color: 'white' }}>
-                {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-              </div>
+              {user?.photo ? (
+                <img 
+                  src={user.photo} 
+                  alt={user.name} 
+                  className="rounded-circle mx-auto mb-3 border border-success"
+                  style={{ width: '120px', height: '120px', objectFit: 'cover', borderWidth: '3px' }}
+                />
+              ) : (
+                <div className="rounded-circle bg-success d-flex align-items-center justify-content-center mx-auto mb-3"
+                     style={{ width: '120px', height: '120px', fontSize: '48px', color: 'white' }}>
+                  {user?.name?.charAt(0)?.toUpperCase() || 'A'}
+                </div>
+              )}
               <h4 className="fw-bold mb-1">{user?.name || 'Admin'}</h4>
               <p className="text-muted small">
                 <i className="bi bi-shield-check text-success me-1"></i>
@@ -181,6 +225,63 @@ const AdminProfile = () => {
                       <input type="text" className="form-control" name="address" value={formData.address} onChange={handleChange} disabled={loading} />
                     </div>
 
+                    <div className="col-12 mb-3">
+                      <label className="form-label fw-semibold">Profile Photo (Cloudinary)</label>
+                      <input
+                        type="file"
+                        className="form-control"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handlePhotoChange}
+                        disabled={loading}
+                      />
+                      {photo && (
+                        <small className="text-success d-block mt-1">
+                          <i className="bi bi-cloud-upload me-1"></i>
+                          Selected: {photo.name} ({Math.round(photo.size / 1024)} KB)
+                        </small>
+                      )}
+                      {user?.photo && !photo && (
+                        <small className="text-muted d-block mt-1">
+                          <i className="bi bi-image me-1"></i>
+                          Current photo will be kept if you don't upload a new one
+                        </small>
+                      )}
+                    </div>
+
+                    {photoPreview && (
+                      <div className="col-12 mb-3">
+                        <div className="card bg-light">
+                          <div className="card-body text-center">
+                            <h6 className="text-muted">New Photo Preview</h6>
+                            <img 
+                              src={photoPreview} 
+                              alt="Profile preview" 
+                              className="rounded-circle border border-success"
+                              style={{ width: '80px', height: '80px', objectFit: 'cover' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {loading && uploadProgress > 0 && uploadProgress < 100 && (
+                      <div className="col-12 mb-3">
+                        <div className="card bg-info bg-opacity-10">
+                          <div className="card-body">
+                            <h6 className="text-info">Uploading to Cloudinary...</h6>
+                            <div className="progress">
+                              <div 
+                                className="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                                style={{ width: `${uploadProgress}%` }}
+                              >
+                                {uploadProgress}%
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="col-12 mt-3">
                       <hr />
                       <h6 className="fw-bold text-warning">
@@ -203,7 +304,7 @@ const AdminProfile = () => {
 
                     <div className="col-12 mt-3 d-flex gap-2">
                       <button type="submit" className="btn btn-success" disabled={loading}>
-                        {loading ? 'Saving...' : <><i className="bi bi-save me-2"></i>Save Changes</>}
+                        {loading ? 'Saving...' : <><i className="bi bi-cloud-upload me-2"></i>Save Changes</>}
                       </button>
                       <button type="button" className="btn btn-secondary" onClick={() => setEditMode(false)} disabled={loading}>
                         <i className="bi bi-x-circle me-2"></i>Cancel
