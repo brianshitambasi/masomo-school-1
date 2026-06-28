@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useCallback } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
@@ -11,14 +11,14 @@ const AdminAssignments = () => {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  // ✅ REMOVED: unused state variables
 
-  // ✅ FIXED: authHeader is now inside useCallback
+  // ✅ FIXED: authHeader in useMemo
+  const authHeader = useMemo(() => ({
+    headers: { Authorization: `Bearer ${token}` }
+  }), [token]);
+
+  // ✅ FIXED: fetchAssignments in useCallback with authHeader dependency
   const fetchAssignments = useCallback(async () => {
-    const authHeader = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
-
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/assignment`, authHeader);
@@ -29,7 +29,7 @@ const AdminAssignments = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [authHeader]);
 
   useEffect(() => {
     fetchAssignments();
@@ -38,10 +38,6 @@ const AdminAssignments = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this assignment?')) return;
     
-    const authHeader = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
-
     try {
       await axios.delete(`${API_URL}/assignment/${id}`, authHeader);
       toast.success('Assignment deleted successfully');
@@ -97,6 +93,7 @@ const AdminAssignments = () => {
       </nav>
 
       <div className="row">
+        {/* Sidebar Filters */}
         <div className="col-lg-3 mb-4">
           <div className="card border-0 shadow-sm">
             <div className="card-body p-3">
@@ -146,9 +143,26 @@ const AdminAssignments = () => {
           </div>
         </div>
 
+        {/* Main Content */}
         <div className="col-lg-9">
           <div className="card border-0 shadow-sm">
             <div className="card-body">
+              {/* Header with stats */}
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="fw-bold mb-0">
+                  <i className="bi bi-journal-bookmark-fill text-warning me-2"></i>
+                  Assignments
+                  {!loading && (
+                    <span className="badge bg-primary ms-2">{assignments.length}</span>
+                  )}
+                </h5>
+                <div>
+                  <small className="text-muted">
+                    Showing {filteredAssignments.length} of {assignments.length}
+                  </small>
+                </div>
+              </div>
+
               {loading ? (
                 <div className="text-center py-5">
                   <div className="spinner-border text-success" role="status">
@@ -160,6 +174,15 @@ const AdminAssignments = () => {
                 <div className="text-center py-5">
                   <i className="bi bi-journal-bookmark fs-1 text-muted d-block mb-2"></i>
                   <p className="text-muted">No assignments found</p>
+                  {filter !== 'all' && (
+                    <button
+                      className="btn btn-sm btn-outline-primary mt-2"
+                      onClick={() => setFilter('all')}
+                    >
+                      <i className="bi bi-arrow-counterclockwise me-1"></i>
+                      Clear Filters
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="table-responsive">
