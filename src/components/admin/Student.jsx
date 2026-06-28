@@ -59,7 +59,7 @@ const Student = () => {
         navigate("/admin-dashboard/students/edit", { state: { studentData } })
     }
 
-    // ✅ FIXED: Better image URL handling
+    // ✅ FIXED: Better image URL handling for all photo sources
     const getImageUrl = (photoPath) => {
         if (!photoPath) return null
         // If it's already a full URL (Cloudinary), return as is

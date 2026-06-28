@@ -21,10 +21,21 @@ const StudentsEdit = () => {
   const [parents, setParents] = useState([]);
   const [selectedParent, setSelectedParent] = useState('');
   const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ✅ FIXED: Added token as dependency
+  const getImageUrl = (photoPath) => {
+    if (!photoPath) return null;
+    if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+      return photoPath;
+    }
+    if (photoPath.startsWith('uploads/')) {
+      return `${API_URL}/${photoPath}`;
+    }
+    return `${API_URL}/${photoPath}`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const authHeader = {
@@ -47,7 +58,7 @@ const StudentsEdit = () => {
       }
     };
     fetchData();
-  }, [token]); // ✅ Added token as dependency
+  }, [token]);
 
   useEffect(() => {
     if (!selectedStudent) {
@@ -62,6 +73,25 @@ const StudentsEdit = () => {
     setSelectedClassroom(selectedStudent?.classroom?._id || selectedStudent?.classroom || '');
     setSelectedParent(selectedStudent?.parent?._id || selectedStudent?.parent || '');
   }, [selectedStudent, navigate]);
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please upload a valid image (JPEG, PNG, GIF, or WEBP)');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+      setPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -180,11 +210,32 @@ const StudentsEdit = () => {
             </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold">Photo</label>
-              <input type="file" className="form-control" accept="image/*" onChange={(e) => setPhoto(e.target.files[0])} disabled={loading} />
-              {selectedStudent?.photo && (
+              <input type="file" className="form-control" accept="image/*" onChange={handlePhotoChange} disabled={loading} />
+              {selectedStudent?.photo && !photoPreview && (
                 <div className="mt-2">
                   <small className="text-muted">Current photo:</small>
-                  <img src={`${API_URL}/${selectedStudent.photo}`} alt="Student" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '50%', border: '2px solid #28a745' }} />
+                  <div className="mt-1">
+                    <img 
+                      src={getImageUrl(selectedStudent.photo)} 
+                      alt="Student" 
+                      style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '50%', border: '2px solid #28a745' }} 
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              {photoPreview && (
+                <div className="mt-2">
+                  <small className="text-success">New photo preview:</small>
+                  <div className="mt-1">
+                    <img 
+                      src={photoPreview} 
+                      alt="New student" 
+                      style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '50%', border: '2px solid #28a745' }} 
+                    />
+                  </div>
                 </div>
               )}
             </div>
