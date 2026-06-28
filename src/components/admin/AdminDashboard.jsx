@@ -9,32 +9,24 @@ import { API_URL } from '../../config'
 const AdminDashboard = () => {
     const { token, user } = useContext(AuthContext)
     const [loading, setLoading] = useState(true)
-    const [dashboardData, setDashboardData] = useState({
-        teachers: [],
-        students: [],
-        parents: [],
-        classrooms: [],
-        stats: {
-            totalTeachers: 0,
-            totalStudents: 0,
-            totalParents: 0,
-            totalClassrooms: 0,
-            totalStudentsInClasses: 0,
-            teachersWithoutClass: 0,
-            classesWithoutTeacher: 0
-        }
+    const [stats, setStats] = useState({
+        totalTeachers: 0,
+        totalStudents: 0,
+        totalParents: 0,
+        totalClasses: 0,
+        classesWithoutTeacher: 0,
+        teachersWithoutClass: 0
     })
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
+        const fetchStats = async () => {
+            const authHeader = {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+
             setLoading(true)
             try {
-                const authHeader = {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-
-                // Fetch all data in parallel with error handling for each
-                const [teachersRes, studentsRes, parentsRes, classroomsRes] = await Promise.all([
+                const [teachersRes, studentsRes, parentsRes, classesRes] = await Promise.all([
                     axios.get(`${API_URL}/teacher`, authHeader).catch(err => ({ data: [] })),
                     axios.get(`${API_URL}/student`, authHeader).catch(err => ({ data: [] })),
                     axios.get(`${API_URL}/parent`, authHeader).catch(err => ({ data: [] })),
@@ -44,100 +36,79 @@ const AdminDashboard = () => {
                 const teachers = teachersRes.data || []
                 const students = studentsRes.data || []
                 const parents = parentsRes.data || []
-                const classrooms = classroomsRes.data || []
-
-                const totalStudentsInClasses = classrooms.reduce((acc, cls) => {
-                    return acc + (cls.students?.length || 0)
-                }, 0)
+                const classrooms = classesRes.data || []
 
                 const teachersWithClass = classrooms.filter(cls => cls.teacher).length
                 const teachersWithoutClass = teachers.length - teachersWithClass
                 const classesWithoutTeacher = classrooms.filter(cls => !cls.teacher).length
 
-                setDashboardData({
-                    teachers,
-                    students,
-                    parents,
-                    classrooms,
-                    stats: {
-                        totalTeachers: teachers.length,
-                        totalStudents: students.length,
-                        totalParents: parents.length,
-                        totalClassrooms: classrooms.length,
-                        totalStudentsInClasses,
-                        teachersWithoutClass: teachersWithoutClass > 0 ? teachersWithoutClass : 0,
-                        classesWithoutTeacher
-                    }
+                setStats({
+                    totalTeachers: teachers.length,
+                    totalStudents: students.length,
+                    totalParents: parents.length,
+                    totalClasses: classrooms.length,
+                    classesWithoutTeacher,
+                    teachersWithoutClass: teachersWithoutClass > 0 ? teachersWithoutClass : 0
                 })
-
             } catch (error) {
-                console.error('Error fetching dashboard data:', error)
+                console.error('Error fetching stats:', error)
                 toast.error('Failed to load dashboard data')
             } finally {
                 setLoading(false)
             }
         }
-        fetchDashboardData()
+        fetchStats()
     }, [token])
 
     const dashboardCards = [
         {
             id: 1,
             title: 'Teachers',
-            count: dashboardData.stats.totalTeachers,
+            count: stats.totalTeachers,
             icon: 'bi-person-badge',
             color: 'primary',
             bgColor: '#e3f2fd',
             link: '/admin-dashboard/teachers',
-            description: 'Total teachers in school',
-            subInfo: `${dashboardData.stats.teachersWithoutClass} without class`
+            description: 'Total teachers',
+            subInfo: `${stats.teachersWithoutClass} without class`
         },
         {
             id: 2,
             title: 'Students',
-            count: dashboardData.stats.totalStudents,
+            count: stats.totalStudents,
             icon: 'bi-people-fill',
             color: 'success',
             bgColor: '#e8f5e9',
             link: '/admin-dashboard/students',
-            description: 'Total students enrolled',
-            subInfo: `${dashboardData.stats.totalStudentsInClasses} in classes`
+            description: 'Total students'
         },
         {
             id: 3,
             title: 'Parents',
-            count: dashboardData.stats.totalParents,
+            count: stats.totalParents,
             icon: 'bi-person-lines-fill',
             color: 'warning',
             bgColor: '#fff3e0',
             link: '/admin-dashboard/parents',
-            description: 'Total parents registered'
+            description: 'Total parents'
         },
         {
             id: 4,
             title: 'Classes',
-            count: dashboardData.stats.totalClassrooms,
+            count: stats.totalClasses,
             icon: 'bi-building',
             color: 'info',
             bgColor: '#e1f5fe',
             link: '/admin-dashboard/classes',
-            description: 'Total classes available',
-            subInfo: `${dashboardData.stats.classesWithoutTeacher} without teacher`
+            description: 'Total classes',
+            subInfo: `${stats.classesWithoutTeacher} without teacher`
         }
-    ]
-
-    const quickActions = [
-        { id: 1, title: 'Add Student', icon: 'bi-person-plus', link: '/admin-dashboard/students/add', color: 'success' },
-        { id: 2, title: 'Add Teacher', icon: 'bi-person-badge', link: '/admin-dashboard/teachers/add', color: 'primary' },
-        { id: 3, title: 'Add Parent', icon: 'bi-person-add', link: '/admin-dashboard/parents/add', color: 'warning' },
-        { id: 4, title: 'Add Class', icon: 'bi-building-add', link: '/admin-dashboard/classes/add', color: 'info' }
     ]
 
     return (
         <div className="container-fluid px-4 py-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
-            {/* Welcome Section */}
             <div className="row mb-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm" style={{
@@ -145,53 +116,32 @@ const AdminDashboard = () => {
                         borderRadius: '15px'
                     }}>
                         <div className="card-body p-4">
-                            <div className="row align-items-center">
-                                <div className="col-md-8">
-                                    <h2 className="text-white fw-bold mb-2">
-                                        <i className="bi bi-house-door-fill me-2"></i>
-                                        Welcome back, {user?.name || 'Admin'}! í±‹
-                                    </h2>
-                                    <p className="text-white-50 mb-0">
-                                        <i className="bi bi-calendar3 me-2"></i>
-                                        {new Date().toLocaleDateString('en-US', { 
-                                            weekday: 'long', 
-                                            year: 'numeric', 
-                                            month: 'long', 
-                                            day: 'numeric' 
-                                        })}
-                                        <span className="mx-2">â€¢</span>
-                                        <i className="bi bi-clock me-1"></i>
-                                        {new Date().toLocaleTimeString('en-US', { 
-                                            hour: '2-digit', 
-                                            minute: '2-digit' 
-                                        })}
-                                    </p>
-                                </div>
-                                <div className="col-md-4 text-md-end mt-3 mt-md-0">
-                                    <button 
-                                        className="btn btn-light btn-sm px-4"
-                                        onClick={() => window.location.reload()}
-                                        disabled={loading}
-                                    >
-                                        <i className={`bi ${loading ? 'bi-arrow-repeat spin' : 'bi-arrow-clockwise'} me-1`}></i>
-                                        {loading ? 'Loading...' : 'Refresh'}
-                                    </button>
-                                </div>
-                            </div>
+                            <h2 className="text-white fw-bold mb-2">
+                                <i className="bi bi-house-door-fill me-2"></i>
+                                Welcome, {user?.name || 'Admin'}! í±‹
+                            </h2>
+                            <p className="text-white-50 mb-0">
+                                <i className="bi bi-calendar3 me-2"></i>
+                                {new Date().toLocaleDateString('en-US', { 
+                                    weekday: 'long', 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                })}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Stats Cards */}
             <div className="row g-4 mb-4">
                 {dashboardCards.map((card) => (
-                    <div className="col-xl-3 col-lg-6 col-md-6" key={card.id}>
+                    <div className="col-xl-3 col-md-6" key={card.id}>
                         <Link to={card.link} className="text-decoration-none">
-                            <div className="card border-0 shadow-sm h-100 transition-card">
+                            <div className="card border-0 shadow-sm h-100 hover-card">
                                 <div className="card-body p-4">
                                     <div className="d-flex justify-content-between align-items-start">
-                                        <div className="flex-grow-1">
+                                        <div>
                                             <h6 className="text-uppercase text-muted fw-bold small mb-2">
                                                 {card.title}
                                             </h6>
@@ -230,8 +180,8 @@ const AdminDashboard = () => {
 
             {/* Quick Actions */}
             <div className="row g-4">
-                <div className="col-lg-6">
-                    <div className="card border-0 shadow-sm h-100">
+                <div className="col-md-6">
+                    <div className="card border-0 shadow-sm">
                         <div className="card-header bg-white border-0 pt-3">
                             <h5 className="fw-bold mb-0">
                                 <i className="bi bi-lightning-fill text-warning me-2"></i>
@@ -240,80 +190,104 @@ const AdminDashboard = () => {
                         </div>
                         <div className="card-body">
                             <div className="row g-3">
-                                {quickActions.map((action) => (
-                                    <div className="col-6" key={action.id}>
-                                        <Link to={action.link} className="text-decoration-none">
-                                            <div className="p-3 rounded-3 text-center border transition-action"
-                                                 style={{ 
-                                                     backgroundColor: '#f8f9fa',
-                                                     cursor: 'pointer',
-                                                     transition: 'all 0.3s'
-                                                 }}>
-                                                <i className={`bi ${action.icon} fs-2 text-${action.color} d-block mb-2`}></i>
-                                                <span className="small fw-semibold">{action.title}</span>
-                                            </div>
-                                        </Link>
-                                    </div>
-                                ))}
+                                <div className="col-6">
+                                    <Link to="/admin-dashboard/classes" className="text-decoration-none">
+                                        <div className="p-3 rounded-3 text-center border hover-card">
+                                            <i className="bi bi-building fs-2 text-info d-block mb-2"></i>
+                                            <span className="small fw-semibold">Manage Classes</span>
+                                        </div>
+                                    </Link>
+                                </div>
+                                <div className="col-6">
+                                    <Link to="/admin-dashboard/teachers" className="text-decoration-none">
+                                        <div className="p-3 rounded-3 text-center border hover-card">
+                                            <i className="bi bi-person-badge fs-2 text-primary d-block mb-2"></i>
+                                            <span className="small fw-semibold">Manage Teachers</span>
+                                        </div>
+                                    </Link>
+                                </div>
+                                <div className="col-6">
+                                    <Link to="/admin-dashboard/students/add" className="text-decoration-none">
+                                        <div className="p-3 rounded-3 text-center border hover-card">
+                                            <i className="bi bi-person-plus fs-2 text-success d-block mb-2"></i>
+                                            <span className="small fw-semibold">Add Student</span>
+                                        </div>
+                                    </Link>
+                                </div>
+                                <div className="col-6">
+                                    <Link to="/admin-dashboard/parents/add" className="text-decoration-none">
+                                        <div className="p-3 rounded-3 text-center border hover-card">
+                                            <i className="bi bi-person-add fs-2 text-warning d-block mb-2"></i>
+                                            <span className="small fw-semibold">Add Parent</span>
+                                        </div>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Recent Activity */}
-                <div className="col-lg-6">
-                    <div className="card border-0 shadow-sm h-100">
+                <div className="col-md-6">
+                    <div className="card border-0 shadow-sm">
                         <div className="card-header bg-white border-0 pt-3">
                             <h5 className="fw-bold mb-0">
-                                <i className="bi bi-clock-history text-info me-2"></i>
-                                Recent Activity
+                                <i className="bi bi-clipboard-data text-info me-2"></i>
+                                School Summary
                             </h5>
                         </div>
                         <div className="card-body">
-                            <div className="text-center py-4">
-                                <i className="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
-                                <p className="text-muted">No recent activities</p>
+                            <div className="row text-center">
+                                <div className="col-4">
+                                    <div className="p-3 rounded bg-primary bg-opacity-10">
+                                        <h4 className="text-primary">{stats.totalTeachers}</h4>
+                                        <small className="text-muted">Teachers</small>
+                                    </div>
+                                </div>
+                                <div className="col-4">
+                                    <div className="p-3 rounded bg-success bg-opacity-10">
+                                        <h4 className="text-success">{stats.totalStudents}</h4>
+                                        <small className="text-muted">Students</small>
+                                    </div>
+                                </div>
+                                <div className="col-4">
+                                    <div className="p-3 rounded bg-info bg-opacity-10">
+                                        <h4 className="text-info">{stats.totalClasses}</h4>
+                                        <small className="text-muted">Classes</small>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Footer */}
-            <div className="row mt-4">
-                <div className="col-12">
-                    <div className="card border-0 shadow-sm">
-                        <div className="card-body text-center py-3">
-                            <p className="text-muted small mb-0">
-                                <i className="bi bi-shield-check text-success me-1"></i>
-                                Logged in as <strong className="text-primary">{user?.role || 'Admin'}</strong>
-                                <span className="mx-2">â€¢</span>
-                                <i className="bi bi-database me-1"></i>
-                                Data last updated: {new Date().toLocaleString()}
-                                {loading && <i className="bi bi-arrow-repeat spin ms-2"></i>}
-                            </p>
+                            <hr />
+                            <div className="row text-center">
+                                <div className="col-6">
+                                    <div className="p-2 rounded bg-warning bg-opacity-10">
+                                        <h6 className="text-warning">{stats.classesWithoutTeacher}</h6>
+                                        <small className="text-muted">Classes without Teacher</small>
+                                    </div>
+                                </div>
+                                <div className="col-6">
+                                    <div className="p-2 rounded bg-danger bg-opacity-10">
+                                        <h6 className="text-danger">{stats.teachersWithoutClass}</h6>
+                                        <small className="text-muted">Teachers without Class</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <style jsx="true">{`
-                .hover-shadow:hover {
-                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+                .hover-card {
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    cursor: pointer;
+                }
+                .hover-card:hover {
                     transform: translateY(-5px);
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
                 }
-                .transition {
-                    transition: all 0.3s ease;
-                }
-                .card {
-                    border-radius: 12px !important;
-                }
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                .spin {
-                    animation: spin 1s linear infinite;
+                .display-6 {
+                    font-size: 2rem;
+                    font-weight: 300;
                 }
             `}</style>
         </div>
