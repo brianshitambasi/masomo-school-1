@@ -20,6 +20,7 @@ const TeacherAssignmentEdit = () => {
     classroom: ''
   });
 
+  // Fetch assignment details and classrooms
   useEffect(() => {
     const fetchData = async () => {
       const authHeader = {
@@ -28,9 +29,22 @@ const TeacherAssignmentEdit = () => {
 
       setFetching(true);
       try {
-        // Fetch classrooms
+        // Fetch assignment details
+        const assignmentRes = await axios.get(`${API_URL}/assignment/${id}`, authHeader);
+        const assignment = assignmentRes.data;
+        
+        console.log('Assignment data:', assignment);
+        
+        setFormData({
+          title: assignment.title || '',
+          description: assignment.description || '',
+          dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : '',
+          classroom: assignment.classroom?._id || assignment.classroom || ''
+        });
+
+        // Fetch classrooms for the teacher
         const classroomsRes = await axios.get(`${API_URL}/classroom`, authHeader);
-        // ✅ FIXED: Filter classrooms properly
+        // Filter classrooms where this teacher is assigned
         const teacherClassrooms = classroomsRes.data.filter(c => {
           if (c.teacher && typeof c.teacher === 'object' && c.teacher._id) {
             return c.teacher._id === user?.teacherId || c.teacher._id === user?.id;
@@ -41,17 +55,8 @@ const TeacherAssignmentEdit = () => {
           return false;
         });
         setClassrooms(teacherClassrooms);
-
-        // Fetch assignment details
-        const assignmentRes = await axios.get(`${API_URL}/assignment/${id}`, authHeader);
-        const assignment = assignmentRes.data;
         
-        setFormData({
-          title: assignment.title || '',
-          description: assignment.description || '',
-          dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().split('T')[0] : '',
-          classroom: assignment.classroom?._id || assignment.classroom || ''
-        });
+        console.log('Teacher classrooms:', teacherClassrooms);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Failed to load assignment details');

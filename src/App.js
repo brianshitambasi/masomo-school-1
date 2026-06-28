@@ -129,6 +129,7 @@ function App() {
             <Route path='student/:id' element={<TeacherStudentDetail />} /> {/* ✅ ADDED */}
             <Route path='assignments' element={<TeacherAssignments />} />
             <Route path='assignments/add' element={<TeacherAssignmentAdd />} />
+            <Route path='assignments/edit/:id' element={<TeacherAssignmentEdit />} />
             <Route path='assignments/edit' element={<TeacherAssignmentEdit />} />
             <Route path='attendance' element={<TeacherAttendance />} />
             <Route path='grades' element={<TeacherGrades />} />
