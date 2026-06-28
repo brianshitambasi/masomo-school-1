@@ -33,7 +33,7 @@ const Student = () => {
             }
         }
         fetchStudents()
-    }, [])
+    }, [token]) // ✅ Added token as dependency
 
     const handleDelete = async (id) => {
         const authHeader = {
@@ -57,6 +57,12 @@ const Student = () => {
 
     const handleEdit = (studentData) => {
         navigate("/admin-dashboard/students/edit", { state: { studentData } })
+    }
+
+    const getImageUrl = (photoPath) => {
+        if (!photoPath) return null
+        if (photoPath.startsWith('http')) return photoPath
+        return `${API_URL}/${photoPath}`
     }
 
     return (
@@ -119,15 +125,10 @@ const Student = () => {
                                         <td>
                                             {student.photo ? (
                                                 <img 
-                                                    src={student.photo} 
+                                                    src={getImageUrl(student.photo)} 
                                                     alt={student.name}
                                                     className="rounded-circle border border-success"
-                                                    style={{ 
-                                                        width: '50px', 
-                                                        height: '50px', 
-                                                        objectFit: 'cover',
-                                                        borderWidth: '2px'
-                                                    }}
+                                                    style={{ width: '50px', height: '50px', objectFit: 'cover', borderWidth: '2px' }}
                                                     onError={(e) => {
                                                         e.target.style.display = 'none'
                                                         const parent = e.target.parentElement
