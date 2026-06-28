@@ -32,6 +32,8 @@ const AdminAssignmentEdit = () => {
         const assignmentRes = await axios.get(`${API_URL}/assignment/${id}`, authHeader);
         const assignment = assignmentRes.data;
         
+        console.log('Assignment data:', assignment);
+        
         setFormData({
           title: assignment.title || '',
           description: assignment.description || '',
@@ -196,7 +198,19 @@ const AdminAssignmentEdit = () => {
               className="btn btn-warning"
               disabled={loading}
             >
-              {loading ? 'Updating...' : 'Update Assignment'}
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </span>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-save me-2"></i>
+                  Update Assignment
+                </>
+              )}
             </button>
             <Link
               to="/admin-dashboard/assignments"
