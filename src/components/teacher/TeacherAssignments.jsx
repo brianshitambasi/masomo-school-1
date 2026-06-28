@@ -11,16 +11,16 @@ const TeacherAssignments = () => {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ FIXED: fetchAssignments is now INSIDE useEffect
   useEffect(() => {
-    const authHeader = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
-
     const fetchAssignments = async () => {
+      const authHeader = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
+
       setLoading(true);
       try {
-        const res = await axios.get(`${API_URL}/assignment`, authHeader);
+        // Fetch only teacher's own assignments
+        const res = await axios.get(`${API_URL}/teacher/my-assignments`, authHeader);
         setAssignments(res.data || []);
       } catch (error) {
         console.error('Error fetching assignments:', error);
@@ -30,8 +30,10 @@ const TeacherAssignments = () => {
       }
     };
 
-    fetchAssignments();
-  }, [token]); // ✅ Only token as dependency
+    if (token) {
+      fetchAssignments();
+    }
+  }, [token]);
 
   const deleteAssignment = async (id) => {
     const authHeader = {
@@ -44,7 +46,7 @@ const TeacherAssignments = () => {
       toast.success('Assignment deleted');
       
       // Refresh list
-      const res = await axios.get(`${API_URL}/assignment`, authHeader);
+      const res = await axios.get(`${API_URL}/teacher/my-assignments`, authHeader);
       setAssignments(res.data || []);
     } catch (error) {
       console.error('Error deleting assignment:', error);

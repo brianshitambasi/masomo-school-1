@@ -26,8 +26,6 @@ const TeacherProfile = () => {
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
-  // ✅ REMOVED unused authHeader
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -66,6 +64,15 @@ const TeacherProfile = () => {
     }
 
     try {
+      // ✅ FIXED: Use user?.teacherId or user?.id
+      const teacherId = user?.teacherId || user?.id;
+      
+      if (!teacherId) {
+        toast.error('Teacher ID not found. Please logout and login again.');
+        setLoading(false);
+        return;
+      }
+
       const formDataObj = new FormData();
       Object.keys(formData).forEach(key => {
         if (formData[key]) formDataObj.append(key, formData[key]);
@@ -73,7 +80,7 @@ const TeacherProfile = () => {
       if (photo) formDataObj.append('photo', photo);
 
       const res = await axios.put(
-        `${API_URL}/teacher/${user?.teacherId}`,
+        `${API_URL}/teacher/${teacherId}`,
         formDataObj,
         {
           headers: {
@@ -88,11 +95,19 @@ const TeacherProfile = () => {
       );
 
       toast.success(res.data?.message || 'Profile updated successfully');
+      
+      // Update user context with new data
       setUser({
         ...user,
-        ...formData,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        bio: formData.bio,
+        qualifications: formData.qualifications,
         photo: res.data?.teacher?.photo || user?.photo
       });
+      
       setEditMode(false);
       setPhoto(null);
       setPhotoPreview(null);

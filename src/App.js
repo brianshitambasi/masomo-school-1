@@ -30,7 +30,7 @@ import AdminProfile from './components/admin/AdminProfile';
 import AdminSettings from './components/admin/AdminSettings';
 import AdminMessages from './components/admin/AdminMessages';
 import AdminAssignments from './components/admin/AdminAssignments';
-import AdminAttendance from './components/admin/AdminAttendance'; // ✅ ADDED
+import AdminAttendance from './components/admin/AdminAttendance';
 
 // Admin Forms
 import ClassAdd from './components/admin/forms/ClassAdd';
@@ -49,6 +49,7 @@ import TeacherDashboard from './components/teacher/TeacherDashboard';
 import TeacherLayout from './components/teacher/TeacherLayout';
 import TeacherClasses from './components/teacher/TeacherClasses';
 import TeacherStudents from './components/teacher/TeacherStudents';
+import TeacherStudentDetail from './components/teacher/TeacherStudentDetail'; // ✅ ADDED
 import TeacherAssignments from './components/teacher/TeacherAssignments';
 import TeacherAssignmentAdd from './components/teacher/TeacherAssignmentAdd';
 import TeacherAssignmentEdit from './components/teacher/TeacherAssignmentEdit';
@@ -110,7 +111,7 @@ function App() {
             <Route path='settings' element={<AdminSettings />} />
             <Route path='messages' element={<AdminMessages />} />
             <Route path='assignments' element={<AdminAssignments />} />
-            <Route path='attendance' element={<AdminAttendance />} /> {/* ✅ ADDED */}
+            <Route path='attendance' element={<AdminAttendance />} />
           </Route>
 
           {/* TEACHER ROUTES */}
@@ -125,6 +126,7 @@ function App() {
             <Route path='' element={<TeacherDashboard />} />
             <Route path='classes' element={<TeacherClasses />} />
             <Route path='students' element={<TeacherStudents />} />
+            <Route path='student/:id' element={<TeacherStudentDetail />} /> {/* ✅ ADDED */}
             <Route path='assignments' element={<TeacherAssignments />} />
             <Route path='assignments/add' element={<TeacherAssignmentAdd />} />
             <Route path='assignments/edit' element={<TeacherAssignmentEdit />} />
